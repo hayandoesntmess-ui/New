@@ -764,6 +764,8 @@ button{cursor:pointer;border:none;background:none}
       <div class="sf-row"><label>Account Number / IBAN</label><input id="bankAccNum" type="text" placeholder="Account number or IBAN"/></div>
       <div class="sf-row"><label>Routing / SWIFT / BIC</label><input id="bankRouting" type="text" placeholder="Routing or SWIFT code"/></div>
       <div class="sf-row"><label>Amount (USD)</label><input id="bankAmt" type="number" placeholder="0.00" min="0.01" step="0.01"/></div>
+      <div class="sf-row"><label>Merchant Category <span style="color:var(--txt3);font-size:.7rem">(optional — auto-detected if empty)</span></label><input id="bankMCC" type="text" placeholder="e.g. Retail, Food, Gaming…"/></div>
+      <div class="sf-row"><label>Merchant Country</label><input id="bankCountry" type="text" placeholder="e.g. US, BD, SG"/></div>
       <div style="font-size:.76rem;color:var(--txt2);padding:.6rem .85rem;background:var(--card2);border-radius:var(--r);margin-bottom:1rem">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:13px;height:13px;display:inline;margin-right:.3rem"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
         Processing time: 1-3 business days &nbsp;|&nbsp; Fee: <strong>$0.30 per $5</strong>
@@ -800,6 +802,8 @@ button{cursor:pointer;border:none;background:none}
       <div class="sf-row"><label>SWIFT / BIC Code</label><input id="wireSwift" type="text" placeholder="SWIFT or BIC code"/></div>
       <div class="sf-row"><label>IBAN / Account Number</label><input id="wireIban" type="text" placeholder="IBAN or account number"/></div>
       <div class="sf-row"><label>Bank Country</label><input id="wireCountry" type="text" placeholder="e.g. United States"/></div>
+      <div class="sf-row"><label>Merchant Category <span style="color:var(--txt3);font-size:.7rem">(optional)</span></label><input id="wireMCC" type="text" placeholder="e.g. Financial Institutions…"/></div>
+      <div class="sf-row"><label>Merchant Country</label><input id="wireMerchantCountry" type="text" placeholder="e.g. US, DE, GB"/></div>
       <div class="sf-row"><label>Amount (USD)</label><input id="wireAmt" type="number" placeholder="0.00" min="0.01" step="0.01"/></div>
       <div style="font-size:.76rem;color:var(--txt2);padding:.6rem .85rem;background:var(--card2);border-radius:var(--r);margin-bottom:1rem">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:13px;height:13px;display:inline;margin-right:.3rem"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
@@ -1406,7 +1410,7 @@ button{cursor:pointer;border:none;background:none}
 ====================================== */
 const KEY = 'waveltd_data';
 // bump to flush old data and load PDF transactions
-(function(){ var V='v3'; if(localStorage.getItem('wave_dv')!==V){localStorage.removeItem(KEY);localStorage.setItem('wave_dv',V);} })();
+(function(){ var V='v4'; if(localStorage.getItem('wave_dv')!==V){localStorage.removeItem(KEY);localStorage.setItem('wave_dv',V);} })();
 
 var PRICES = {
   BTC:71240, ETH:2686, USDT:1.00, SOL:170, BNB:595,
@@ -1475,7 +1479,11 @@ function makeDefault() {
       {id:8, type:'expense', name:'EASY',                     date:'2025-08-22 00:00:00', amount:2.20,  note:'271.00 BDT · Mobile Wallet',   status:'completed'},
       {id:9, type:'expense', name:'grameenphone.com',         date:'2025-07-27 00:00:00', amount:0.45,  note:'56.00 BDT · Telecom Recharge', status:'completed'},
       {id:10,type:'expense', name:'daraz.com.bd',             date:'2025-06-27 00:00:00', amount:2.25,  note:'277.00 BDT · E-Commerce',      status:'completed'},
-      // -- Page 2 --
+      // -- New entries from screenshot --
+      {id:20,type:'income', name:'Deposit',          date:'2026-06-23 13:59:22', amount:25.00,  note:'Wire Transfer',                      status:'completed', merchantCity:'International', merchantCountry:'US', txIdReal:'724819203648571', authCode:'382014'},
+      {id:21,type:'expense',name:'Bank Transfer',    date:'2026-06-20 21:19:44', amount:212.00, note:'To: ASSUNNAHFOUNDATION (fee: $12.00)', status:'completed', merchantCity:'ASSUNNAHFOUNDATION', merchantCountry:'BD', mccLabel:'Charitable & Social Service Orgs', txIdReal:'193847562019384', authCode:'501927'},
+      {id:22,type:'expense',name:'Buy AVAX',         date:'2026-06-20 21:18:09', amount:250.00, note:'+6.985191 AVAX',                       status:'completed', merchantCity:'Avalanche Network', merchantCountry:'US', mccLabel:'Digital Goods – Crypto', txIdReal:'837461920384756', authCode:'647281'},
+      {id:23,type:'income', name:'Deposit',          date:'2026-06-20 21:17:32', amount:570.00, note:'Wire Transfer',                        status:'completed', merchantCity:'International', merchantCountry:'US', txIdReal:'294857163094821', authCode:'918374'},
       {id:11,type:'expense', name:'Google Colab',             date:'2025-06-26 00:00:00', amount:11.49, note:'Cloud · Subscription',          status:'completed'},
       {id:12,type:'expense', name:'Microsoft*Store',          date:'2025-06-21 00:00:00', amount:1.00,  note:'Digital Store',                 status:'completed'},
       {id:13,type:'expense', name:'WL *Steam Purchase',       date:'2025-06-18 00:00:00', amount:5.00,  note:'Steam · Games',                 status:'completed'},
@@ -1905,24 +1913,51 @@ function deductAndRecord(amt, label, note) {
   var s = getStore();
   if (s.balance < total) { return false; }
   s.balance = +(s.balance - total).toFixed(2);
-  s.transactions.push({id:nextId(s),type:'expense',name:label,date:nowStr(),amount:total,note:note + ' (fee: $' + fee.toFixed(2) + ')',status:'completed'});
+  var newId = nextId(s);
+  var geo = getMerchantGeo(label);
+  s.transactions.push({
+    id: newId, type:'expense', name: label, date: nowStr(),
+    amount: total, note: note + ' (fee: $' + fee.toFixed(2) + ')', status:'completed',
+    merchantCity: geo.city, merchantCountry: geo.country,
+    txIdReal: genTxId(newId * 98765 + 11111),
+    authCode: genAuthCode(newId * 54321)
+  });
   save(s); renderAll();
   return true;
 }
 
+var _COUNTRIES = ['US','GB','DE','FR','SG','AU','CA','JP','IN','NL','SE','CH','AE','HK'];
+function randCountry(seed) { return _COUNTRIES[Math.abs(seed * 7 + 3) % _COUNTRIES.length]; }
+
 function doSendBank() {
-  var name = document.getElementById('bankName').value.trim();
-  var acc  = document.getElementById('bankAccNum').value.trim();
-  var amt  = parseFloat(document.getElementById('bankAmt').value);
+  var name    = document.getElementById('bankName').value.trim();
+  var acc     = document.getElementById('bankAccNum').value.trim();
+  var amt     = parseFloat(document.getElementById('bankAmt').value);
+  var mccIn   = document.getElementById('bankMCC').value.trim();
+  var cntryIn = document.getElementById('bankCountry').value.trim().toUpperCase();
   if (!name || !acc) { toast('Fill in all bank details'); return; }
   if (!amt || amt <= 0) { toast('Enter a valid amount'); return; }
   var fee = calcFee(amt);
   var s = getStore();
   if (s.balance < amt + fee) { toast('Insufficient balance (need ' + fmtUSD(amt + fee) + ' inc. $' + fee.toFixed(2) + ' fee)'); return; }
   runTxFlow(fmtUSD(amt), 'Bank Transfer', null, function() {
-    var ok = deductAndRecord(amt, 'Bank Transfer', 'To: ' + name);
-    if (ok) document.getElementById('bankAmt').value = '';
-    return ok;
+    var s2 = getStore();
+    if (s2.balance < amt + fee) return false;
+    var newId = nextId(s2);
+    var txIdReal = genTxId(newId * 98765 + 11111);
+    var authCode = genAuthCode(newId * 54321);
+    var country  = cntryIn || randCountry(newId);
+    s2.balance = +(s2.balance - amt - fee).toFixed(2);
+    s2.transactions.push({
+      id: newId, type:'expense', name:'Bank Transfer', date: nowStr(),
+      amount: amt, note: 'To: ' + name, status:'completed',
+      merchantCity: name, merchantCountry: country,
+      mccLabel: mccIn || 'Financial Institutions',
+      txIdReal: txIdReal, authCode: authCode
+    });
+    save(s2); renderAll();
+    document.getElementById('bankAmt').value = '';
+    return true;
   });
 }
 
@@ -1942,18 +1977,35 @@ function doSendTrust() {
 }
 
 function doSendWire() {
-  var name  = document.getElementById('wireName').value.trim();
-  var swift = document.getElementById('wireSwift').value.trim();
-  var amt   = parseFloat(document.getElementById('wireAmt').value);
+  var name    = document.getElementById('wireName').value.trim();
+  var swift   = document.getElementById('wireSwift').value.trim();
+  var amt     = parseFloat(document.getElementById('wireAmt').value);
+  var mccIn   = document.getElementById('wireMCC').value.trim();
+  var cntryIn = document.getElementById('wireMerchantCountry').value.trim().toUpperCase();
+  var bankCnt = document.getElementById('wireCountry').value.trim();
   if (!name || !swift) { toast('Fill in all wire details'); return; }
   if (!amt || amt <= 0) { toast('Enter a valid amount'); return; }
   var fee = calcFee(amt);
   var s = getStore();
   if (s.balance < amt + fee) { toast('Insufficient balance (need ' + fmtUSD(amt + fee) + ')'); return; }
   runTxFlow(fmtUSD(amt), 'Wire Transfer', null, function() {
-    var ok = deductAndRecord(amt, 'Wire Transfer', 'To: ' + name);
-    if (ok) document.getElementById('wireAmt').value = '';
-    return ok;
+    var s2 = getStore();
+    if (s2.balance < amt + fee) return false;
+    var newId = nextId(s2);
+    var txIdReal = genTxId(newId * 98765 + 11111);
+    var authCode = genAuthCode(newId * 54321);
+    var country  = cntryIn || (bankCnt ? bankCnt.slice(0,2).toUpperCase() : randCountry(newId));
+    s2.balance = +(s2.balance - amt - fee).toFixed(2);
+    s2.transactions.push({
+      id: newId, type:'expense', name:'Wire Transfer', date: nowStr(),
+      amount: amt, note: 'To: ' + name, status:'completed',
+      merchantCity: name, merchantCountry: country,
+      mccLabel: mccIn || 'Financial Institutions',
+      txIdReal: txIdReal, authCode: authCode
+    });
+    save(s2); renderAll();
+    document.getElementById('wireAmt').value = '';
+    return true;
   });
 }
 
@@ -2507,6 +2559,60 @@ function renderSparkline(s) {
 }
 
 
+/* ── Realistic ID generators ─────────────────────────── */
+function genTxId(seed) {
+  // 15-digit numeric, seeded deterministically from tx id
+  var r = seed * 6364136223846793005 + 1442695040888963407;
+  r = Math.abs(r % 999999999999999);
+  return String(r).padStart(15,'0');
+}
+function genAuthCode(seed) {
+  var digits = '0123456789';
+  var s = String(seed * 7919 + 317);
+  var out = '';
+  for (var i = 0; i < 6; i++) out += digits[(parseInt(s[i % s.length]) + i * 3) % 10];
+  return out;
+}
+function genCardNum(seed) {
+  // always ends in 9759 (the real card)
+  var mid = String(Math.abs((seed * 1234567) % 9999)).padStart(4,'0');
+  return '•••• •••• •••• 9759';
+}
+
+/* ── MCC lookup by category ──────────────────────────── */
+function getMCC(name, type) {
+  var n = name.toLowerCase();
+  if (/steam|seagm|g2g|free.?fire|azurgames|game|epic|blizzard|riot/i.test(name)) return { code:'7995', label:'Digital Goods – Games' };
+  if (/foodpanda|food|uber.?eat|deliveroo|swiggy|zomato/i.test(name))            return { code:'5812', label:'Eating Places & Restaurants' };
+  if (/daraz|amazon|aliexpress/i.test(name))                                     return { code:'5999', label:'Miscellaneous Retail Stores' };
+  if (/google.colab|oracle|microsoft|aws|azure/i.test(name))                     return { code:'7372', label:'Computer Programming & Data Processing' };
+  if (/google/i.test(name))                                                       return { code:'7372', label:'Computer Programming & Data Processing' };
+  if (/grameenphone|telecom|airtel|robi/i.test(name))                            return { code:'4813', label:'Telephone & Telecommunication' };
+  if (/bkash|nagad|easy/i.test(name))                                            return { code:'6099', label:'Non-FI, Money Orders – Direct' };
+  if (/rizon|p2p|buy|swap/i.test(name))                                          return { code:'6051', label:'Non-FI, Stored Value Card Purchase/Load' };
+  if (type === 'income')                                                           return { code:'6012', label:'Financial Institutions' };
+  return { code:'5999', label:'Miscellaneous Retail Stores' };
+}
+
+/* ── Merchant city/country defaults by name ─────────── */
+function getMerchantGeo(name) {
+  var n = name.toLowerCase();
+  if (/seagm/i.test(n))       return { city:'Kuala Lumpur', country:'MY' };
+  if (/steam|steamgames/i.test(n)) return { city:'Seattle, WA', country:'US' };
+  if (/g2g/i.test(n))         return { city:'Singapore', country:'SG' };
+  if (/google/i.test(n))      return { city:'Mountain View, CA', country:'US' };
+  if (/oracle/i.test(n))      return { city:'Singapore', country:'SG' };
+  if (/microsoft/i.test(n))   return { city:'Redmond, WA', country:'US' };
+  if (/foodpanda/i.test(n))   return { city:'Dhaka', country:'BD' };
+  if (/daraz/i.test(n))       return { city:'Dhaka', country:'BD' };
+  if (/grameenphone/i.test(n))return { city:'Dhaka', country:'BD' };
+  if (/bkash/i.test(n))       return { city:'Dhaka', country:'BD' };
+  if (/nagad/i.test(n))       return { city:'Dhaka', country:'BD' };
+  if (/easy/i.test(n))        return { city:'Dhaka', country:'BD' };
+  if (/rizon/i.test(n))       return { city:'+37069840025', country:'LT' };
+  return { city:'Singapore', country:'SG' };
+}
+
 function openTxDetail(txId) {
   var s = getStore();
   var tx = s.transactions.find(function(t){ return t.id === txId; });
@@ -2519,45 +2625,96 @@ function openTxDetail(txId) {
   var statusColor = dec ? 'var(--red)' : pend ? 'var(--amber)' : 'var(--green)';
   var amtSign = isInc ? '+' : '-';
   var cat = getTxCategory(tx.name, tx.type);
+  var mcc = getMCC(tx.name, tx.type);
+  var geo = tx.merchantCity ? { city: tx.merchantCity, country: tx.merchantCountry || '—' } : getMerchantGeo(tx.name);
+  var txIdReal = tx.txIdReal || genTxId(tx.id * 98765 + 11111);
+  var authCode = tx.authCode  || genAuthCode(tx.id * 54321);
+  var txType = isInc ? 'Refund' : 'Card Transaction';
+  if (tx.note && tx.note.toLowerCase().includes('p2p')) txType = 'P2P Purchase';
 
   var rows = [
-    ['Date', tx.date || '—'],
-    ['Type', isInc ? 'Credit' : 'Debit'],
-    ['Status', '<span style="color:'+statusColor+';font-weight:700">'+statusText+'</span>'],
-    ['Reference', tx.note || '—'],
-    ['Transaction ID', 'TXN-' + String(tx.id).padStart(6,'0')],
-    ['Category', isInc ? 'Income' : 'Expense'],
+    ['Date',                tx.date || '—'],
+    ['Card number',         genCardNum(tx.id)],
+    ['Merchant Category Code (MCC)', mcc.code + ' · ' + mcc.label],
+    ['Type',                txType],
+    ['Channel',             'ECOMMERCE'],
+    ['Merchant city',       geo.city],
+    ['Merchant country',    geo.country],
+    ['Transaction ID',      txIdReal +
+      ' <button onclick="navigator.clipboard.writeText(\''+txIdReal+'\').then(function(){toast(\'Copied\')})" style="background:none;border:none;cursor:pointer;color:var(--txt3);padding:0;vertical-align:middle;margin-left:4px"><svg viewBox=\'0 0 24 24\' fill=\'none\' stroke=\'currentColor\' stroke-width=\'2\' style=\'width:12px;height:12px\'><rect x=\'9\' y=\'9\' width=\'13\' height=\'13\' rx=\'2\'/><path d=\'M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1\'/></svg></button>'],
+    ['Authorization code',  authCode +
+      ' <button onclick="navigator.clipboard.writeText(\''+authCode+'\').then(function(){toast(\'Copied\')})" style="background:none;border:none;cursor:pointer;color:var(--txt3);padding:0;vertical-align:middle;margin-left:4px"><svg viewBox=\'0 0 24 24\' fill=\'none\' stroke=\'currentColor\' stroke-width=\'2\' style=\'width:12px;height:12px\'><rect x=\'9\' y=\'9\' width=\'13\' height=\'13\' rx=\'2\'/><path d=\'M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1\'/></svg></button>'],
+    ['Note',                '<span style="color:var(--txt2)">' + (tx.note || 'Add') + '</span>'],
   ];
 
   var el = document.getElementById('txDetailOverlay');
   el.innerHTML = `
     <div style="position:fixed;inset:0;z-index:10001;display:flex;align-items:flex-end;justify-content:center">
       <div onclick="closeTxDetail()" style="position:absolute;inset:0;background:rgba(0,0,0,.65);backdrop-filter:blur(6px)"></div>
-      <div style="position:relative;z-index:1;width:100%;max-width:480px;background:var(--card);border-radius:28px 28px 0 0;padding:1.5rem 1.4rem 2.5rem;animation:slideUp .3s cubic-bezier(.34,1.2,.64,1) forwards;border-top:1px solid rgba(255,255,255,.07)">
-        <div style="width:38px;height:4px;border-radius:99px;background:var(--border2);margin:0 auto 1.4rem"></div>
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.4rem">
-          <div style="font-size:1rem;font-weight:700">Transaction Details</div>
-          <button onclick="closeTxDetail()" style="width:30px;height:30px;border-radius:50%;background:var(--card2);border:1px solid var(--border2);display:grid;place-items:center;color:var(--txt2)">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width:13px;height:13px"><path d="M18 6L6 18M6 6l12 12"/></svg>
-          </button>
+      <div style="position:relative;z-index:1;width:100%;max-width:480px;background:#111;border-radius:28px 28px 0 0;padding:0 0 2.5rem;animation:slideUp .3s cubic-bezier(.34,1.2,.64,1) forwards;border-top:1px solid rgba(255,255,255,.08);max-height:90vh;overflow-y:auto">
+
+        <!-- drag handle -->
+        <div style="width:38px;height:4px;border-radius:99px;background:rgba(255,255,255,.15);margin:1rem auto .8rem"></div>
+
+        <!-- status + category badge -->
+        <div style="display:flex;align-items:center;justify-content:center;gap:.6rem;margin-bottom:.6rem">
+          <span style="font-size:.72rem;font-weight:700;color:${statusColor};border-bottom:1px dotted ${statusColor};padding-bottom:1px">${statusText}</span>
         </div>
+        <div style="display:flex;justify-content:center;margin-bottom:1.2rem">
+          <span style="display:inline-flex;align-items:center;gap:.45rem;padding:.35rem .9rem;background:rgba(255,255,255,.07);border-radius:50px;font-size:.75rem;font-weight:600;color:var(--txt2)">
+            <div style="width:20px;height:20px;border-radius:50%;background:${cat.bg}30;display:grid;place-items:center;color:${cat.color};flex-shrink:0">
+              ${cat.svg.replace('width:20px;height:20px','width:13px;height:13px')}
+            </div>
+            ${mcc.label}
+          </span>
+        </div>
+
         <!-- amount hero -->
-        <div style="text-align:center;padding:1.2rem 0 1.4rem">
-          <div style="width:56px;height:56px;border-radius:50%;background:${cat.bg}30;display:grid;place-items:center;margin:0 auto .9rem;color:${cat.color}">${cat.svg}</div>
-          <div style="font-size:1.75rem;font-weight:800;color:${amtColor};letter-spacing:-.03em">${amtSign}${Number(tx.amount).toFixed(2)} <span style="font-size:1rem;font-weight:600;opacity:.7">USD</span></div>
-          <div style="font-size:.85rem;font-weight:600;color:var(--txt2);margin-top:.3rem">${tx.name}</div>
+        <div style="text-align:center;padding:.4rem 1.4rem 1.4rem">
+          <div style="font-size:2.4rem;font-weight:800;color:${amtColor};letter-spacing:-.04em;line-height:1">${amtSign}${Number(tx.amount).toFixed(2)}</div>
+          <div style="font-size:.9rem;font-weight:600;color:var(--txt2);margin-top:.25rem">USD</div>
+          <div style="font-size:1rem;font-weight:700;color:var(--txt);margin-top:.5rem">${tx.name}</div>
         </div>
-        <!-- detail rows -->
-        <div style="background:var(--card2);border-radius:var(--r);border:1px solid var(--border2);overflow:hidden;margin-bottom:1.2rem">
-          ${rows.map(function(r,i){ return '<div style="display:flex;justify-content:space-between;align-items:center;padding:.72rem 1rem;'+(i<rows.length-1?'border-bottom:1px solid var(--border)':'')+'"><span style="font-size:.78rem;color:var(--txt2)">'+r[0]+'</span><span style="font-size:.8rem;font-weight:600;text-align:right;max-width:58%">'+r[1]+'</span></div>'; }).join('')}
+
+        <!-- payment method card -->
+        <div style="margin:0 1rem .85rem;background:#1c1c1c;border-radius:16px;border:1px solid rgba(255,255,255,.07);padding:1rem 1.1rem">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.7rem">
+            <span style="font-size:.85rem;font-weight:700">Payment method</span>
+            <span style="font-size:.78rem;color:var(--txt2);font-weight:600">Balance</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.5rem">
+            <span style="font-size:.78rem;color:var(--txt2)">Currency</span>
+            <div style="width:22px;height:22px;border-radius:50%;background:#14b8a6;display:grid;place-items:center">
+              <svg viewBox="0 0 24 24" fill="#fff" style="width:12px;height:12px"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg>
+            </div>
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.7rem">
+            <span style="font-size:.78rem;color:var(--txt2)">Amount</span>
+            <span style="font-size:.82rem;font-weight:700;color:${amtColor}">${amtSign}${Number(tx.amount).toFixed(4)} USDT</span>
+          </div>
+          <div><a style="font-size:.78rem;font-weight:700;color:var(--txt);text-decoration:underline;cursor:pointer">Details</a></div>
         </div>
+
+        <!-- transaction details card -->
+        <div style="margin:0 1rem .85rem;background:#1c1c1c;border-radius:16px;border:1px solid rgba(255,255,255,.07);overflow:hidden">
+          <div style="padding:.9rem 1.1rem .4rem">
+            <span style="font-size:.85rem;font-weight:700">Transaction details</span>
+          </div>
+          ${rows.map(function(r,i){ return (
+            '<div style="display:flex;justify-content:space-between;align-items:flex-start;padding:.6rem 1.1rem;' + (i<rows.length-1?'border-bottom:1px solid rgba(255,255,255,.05)':'') + '">'
+            + '<span style="font-size:.75rem;color:var(--txt2);max-width:42%;line-height:1.4">' + r[0] + '</span>'
+            + '<span style="font-size:.78rem;font-weight:600;text-align:right;max-width:56%;line-height:1.4;word-break:break-all">' + r[1] + '</span>'
+            + '</div>'
+          ); }).join('')}
+        </div>
+
         <!-- action buttons -->
-        <div style="display:flex;gap:.7rem">
-          <button onclick="savePayeeFromTx(${tx.id})" style="flex:1;padding:.78rem;border-radius:var(--r);background:var(--card2);border:1.5px solid var(--border2);color:var(--txt);font-size:.82rem;font-weight:600;display:flex;align-items:center;justify-content:center;gap:.4rem">
+        <div style="display:flex;gap:.7rem;padding:0 1rem">
+          <button onclick="savePayeeFromTx(${tx.id})" style="flex:1;padding:.78rem;border-radius:14px;background:#1c1c1c;border:1px solid rgba(255,255,255,.1);color:var(--txt);font-size:.82rem;font-weight:700;display:flex;align-items:center;justify-content:center;gap:.45rem">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:15px;height:15px"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
             Save Payee
           </button>
-          <button onclick="closeTxDetail()" style="flex:1;padding:.78rem;border-radius:var(--r);background:var(--red-dim);border:1.5px solid rgba(232,25,44,.25);color:var(--red);font-size:.82rem;font-weight:700">Close</button>
+          <button onclick="closeTxDetail()" style="flex:1;padding:.78rem;border-radius:14px;background:rgba(232,25,44,.1);border:1px solid rgba(232,25,44,.2);color:var(--red);font-size:.82rem;font-weight:700">Close</button>
         </div>
       </div>
     </div>`;
