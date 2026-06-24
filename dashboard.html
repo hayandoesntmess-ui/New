@@ -538,11 +538,14 @@ button{cursor:pointer;border:none;background:none}
 <div class="screen active" id="scrHome">
   <!-- top bar -->
   <div class="app-bar">
-    <div class="ab-av"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 12c2.7 0 4.8-2.1 4.8-4.8S14.7 2.4 12 2.4 7.2 4.5 7.2 7.2 9.3 12 12 12zm0 2.4c-3.2 0-9.6 1.6-9.6 4.8v2.4h19.2v-2.4c0-3.2-6.4-4.8-9.6-4.8z"/></svg></div>
+    <div class="ab-av" onclick="openAnalytics()" style="cursor:pointer" title="Analytics"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 12c2.7 0 4.8-2.1 4.8-4.8S14.7 2.4 12 2.4 7.2 4.5 7.2 7.2 9.3 12 12 12zm0 2.4c-3.2 0-9.6 1.6-9.6 4.8v2.4h19.2v-2.4c0-3.2-6.4-4.8-9.6-4.8z"/></svg></div>
     <span class="ab-title">Wave LTD</span>
     <div class="ab-right">
-      <button class="ab-btn" onclick="openDeposit()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><path d="M14 14h2v2h-2zM18 14h3v2M14 18h2v3M18 18h3v3"/></svg></button>
-      <button class="ab-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg><span class="notif-dot"></span></button>
+      <button class="ab-btn" onclick="openAnalytics()" title="Spending Analytics"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg></button>
+      <button class="ab-btn" onclick="openNotifCenter()" style="position:relative">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+        <span class="notif-dot" id="notifDot"></span>
+      </button>
       <button class="ab-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></button>
     </div>
   </div>
@@ -650,6 +653,12 @@ button{cursor:pointer;border:none;background:none}
       <div class="full-card" id="dashCard" onclick="handleCardFlip()">
         <!-- FRONT: dark card matching landing page design -->
         <div class="fc-face" style="background:linear-gradient(145deg,#1c1c1c,#111111);box-shadow:inset 0 0 0 1px rgba(255,255,255,.08)">
+          <!-- FREEZE OVERLAY -->
+          <div id="cardFreezeOverlay" style="display:none;position:absolute;inset:0;z-index:10;border-radius:inherit;background:rgba(0,0,0,.72);backdrop-filter:blur(4px);flex-direction:column;align-items:center;justify-content:center;gap:.5rem">
+            <svg viewBox="0 0 24 24" fill="none" stroke="#e8192c" stroke-width="1.8" style="width:36px;height:36px"><path d="M12 2v20M4.93 4.93l14.14 14.14M2 12h20M4.93 19.07 19.07 4.93"/></svg>
+            <div style="font-size:.9rem;font-weight:800;color:#e8192c;letter-spacing:.04em">CARD FROZEN</div>
+            <div style="font-size:.7rem;color:rgba(255,255,255,.5)">Transactions blocked</div>
+          </div>
           <div style="position:absolute;top:-40px;right:-40px;width:220px;height:220px;border-radius:50%;background:rgba(232,25,44,.06);pointer-events:none"></div>
           <div style="position:absolute;bottom:-50px;left:-30px;width:180px;height:180px;border-radius:50%;background:rgba(232,25,44,.04);pointer-events:none"></div>
           <div class="fc-sh"></div>
@@ -1697,7 +1706,6 @@ function doDeposit() {
   const src = document.getElementById('depositSrc').value || 'Bank';
   closeSheet('sheetDeposit');
   showTxProcessing(fmtUSD(amt), 'Deposit · ' + src);
-  // update sublabel to say "Adding funds"
   document.getElementById('txSublabel').textContent = 'Adding funds to your account';
   document.getElementById('txProgressFill').style.animation = 'none';
   void document.getElementById('txProgressFill').offsetWidth;
@@ -1705,10 +1713,15 @@ function doDeposit() {
   clearTimeout(_txTimer1);
   _txTimer1 = setTimeout(function() {
     const s = getStore();
+    var newId = nextId(s);
     s.balance = +(s.balance + amt).toFixed(2);
-    s.transactions.push({id:nextId(s),type:'income',name:'Deposit',date:nowStr(),amount:amt,note:src,status:'completed'});
+    s.transactions.push({
+      id: newId, type:'income', name:'Deposit', date: nowStr(), amount: amt, note: src, status:'completed',
+      merchantCity:'International', merchantCountry:'US',
+      txIdReal: genTxId(newId * 98765 + 11111), authCode: genAuthCode(newId * 54321)
+    });
     save(s); renderAll();
-    // show success with green label
+    pushNotif('💰 Deposit Received', '+' + fmtUSD(amt) + ' via ' + src + ' added to your balance.', 'income');
     var ring = document.getElementById('txRing');
     var label = document.getElementById('txLabel');
     var sublabel = document.getElementById('txSublabel');
@@ -1908,6 +1921,7 @@ function runTxFlow(amtText, methodText, successMsg, workFn) {
 }
 
 function deductAndRecord(amt, label, note) {
+  if (checkFrozen()) return false;
   var fee = calcFee(amt);
   var total = +(amt + fee).toFixed(2);
   var s = getStore();
@@ -1923,6 +1937,7 @@ function deductAndRecord(amt, label, note) {
     authCode: genAuthCode(newId * 54321)
   });
   save(s); renderAll();
+  pushNotif('💳 Payment Sent', fmtUSD(total) + ' to ' + label + '.', 'expense');
   return true;
 }
 
@@ -1930,6 +1945,7 @@ var _COUNTRIES = ['US','GB','DE','FR','SG','AU','CA','JP','IN','NL','SE','CH','A
 function randCountry(seed) { return _COUNTRIES[Math.abs(seed * 7 + 3) % _COUNTRIES.length]; }
 
 function doSendBank() {
+  if (checkFrozen()) return;
   var name    = document.getElementById('bankName').value.trim();
   var acc     = document.getElementById('bankAccNum').value.trim();
   var amt     = parseFloat(document.getElementById('bankAmt').value);
@@ -1956,12 +1972,14 @@ function doSendBank() {
       txIdReal: txIdReal, authCode: authCode
     });
     save(s2); renderAll();
+    pushNotif('🏦 Bank Transfer Sent', fmtUSD(amt) + ' sent to ' + name + '.', 'expense');
     document.getElementById('bankAmt').value = '';
     return true;
   });
 }
 
 function doSendTrust() {
+  if (checkFrozen()) return;
   var addr = document.getElementById('trustAddr').value.trim();
   var amt  = parseFloat(document.getElementById('trustAmt').value);
   if (!addr) { toast('Enter a wallet address'); return; }
@@ -1977,6 +1995,7 @@ function doSendTrust() {
 }
 
 function doSendWire() {
+  if (checkFrozen()) return;
   var name    = document.getElementById('wireName').value.trim();
   var swift   = document.getElementById('wireSwift').value.trim();
   var amt     = parseFloat(document.getElementById('wireAmt').value);
@@ -2004,6 +2023,7 @@ function doSendWire() {
       txIdReal: txIdReal, authCode: authCode
     });
     save(s2); renderAll();
+    pushNotif('🔁 Wire Transfer Sent', fmtUSD(amt) + ' wired to ' + name + '.', 'expense');
     document.getElementById('wireAmt').value = '';
     return true;
   });
@@ -2225,6 +2245,7 @@ function updateBuyPreview() {
   el.innerHTML = `<span style="color:var(--green);font-weight:700">≈ ${qty} ${sym}</span> &nbsp;·&nbsp; 1 ${sym} = $${PRICES[sym].toLocaleString()}`;
 }
 function doBuy() {
+  if (checkFrozen()) return;
   const sym = document.getElementById('buyCoin').value;
   const amt = parseFloat(document.getElementById('buyAmt').value);
   if (!amt||amt<=0) { toast('Enter a valid amount'); return; }
@@ -2234,10 +2255,15 @@ function doBuy() {
   runTxFlow(fmtUSD(amt), 'Buy ' + sym, null, function() {
     const s2 = getStore();
     if (s2.balance < amt) return false;
+    var newId = nextId(s2);
+    var qty = (amt/PRICES[sym]).toFixed(6);
     s2.balance = +(s2.balance - amt).toFixed(2);
     s2.crypto[sym] = +((s2.crypto[sym]||0) + amt).toFixed(2);
-    s2.transactions.push({id:nextId(s2),type:'expense',name:`Buy ${sym}`,date:nowStr(),amount:amt,note:`+${(amt/PRICES[sym]).toFixed(6)} ${sym}`,status:'completed'});
+    s2.transactions.push({id:newId,type:'expense',name:`Buy ${sym}`,date:nowStr(),amount:amt,note:`+${qty} ${sym}`,status:'completed',
+      merchantCity:'Crypto Exchange',merchantCountry:'US',mccLabel:'Digital Goods – Crypto',
+      txIdReal:genTxId(newId*98765+11111),authCode:genAuthCode(newId*54321)});
     save(s2); renderAll();
+    pushNotif('📈 Crypto Purchased', `+${qty} ${sym} for ${fmtUSD(amt)}.`, 'crypto');
     document.getElementById('buyAmt').value = '';
     return true;
   });
@@ -2275,6 +2301,7 @@ function updateSellPreview() {
   el.innerHTML = `Selling <span style="color:var(--red);font-weight:700">${qty} ${sym}</span> &nbsp;·&nbsp; Receive <span style="color:var(--green);font-weight:700">$${a.toFixed(2)}</span>`;
 }
 function doSell() {
+  if (checkFrozen()) return;
   const sym = document.getElementById('sellCoin').value;
   const amt = parseFloat(document.getElementById('sellAmt').value);
   if (!amt||amt<=0) { toast('Enter a valid amount'); return; }
@@ -2286,10 +2313,15 @@ function doSell() {
     const s2 = getStore();
     const h2 = s2.crypto[sym]||0;
     if (h2 < amt) return false;
+    var newId = nextId(s2);
+    var qty = (amt/PRICES[sym]).toFixed(6);
     s2.crypto[sym] = +(h2 - amt).toFixed(2);
     s2.balance = +(s2.balance + amt).toFixed(2);
-    s2.transactions.push({id:nextId(s2),type:'income',name:`Sell ${sym}`,date:nowStr(),amount:amt,note:`-${(amt/PRICES[sym]).toFixed(6)} ${sym}`,status:'completed'});
+    s2.transactions.push({id:newId,type:'income',name:`Sell ${sym}`,date:nowStr(),amount:amt,note:`-${qty} ${sym}`,status:'completed',
+      merchantCity:'Crypto Exchange',merchantCountry:'US',mccLabel:'Digital Goods – Crypto',
+      txIdReal:genTxId(newId*98765+11111),authCode:genAuthCode(newId*54321)});
     save(s2); renderAll();
+    pushNotif('📉 Crypto Sold', `-${qty} ${sym} · ${fmtUSD(amt)} credited to wallet.`, 'crypto');
     setTimeout(function(){
       var lbl = document.getElementById('txLabel');
       var sub = document.getElementById('txSublabel');
@@ -2307,15 +2339,294 @@ function openMore() { openSheet('sheetMore'); }
 /* ======================================
    CARD CONTROLS
 ====================================== */
+/* ══════════════════════════════════════════════════
+   CARD FREEZE  –  blocks all transactions
+══════════════════════════════════════════════════ */
 let frozen = false;
 function toggleFreeze() {
   frozen = !frozen;
   const btn = document.getElementById('freezeBtn');
   const lbl = document.getElementById('freezeLbl');
   lbl.textContent = frozen ? 'Unfreeze' : 'Freeze';
-  btn.className = frozen ? 'cc frz' : 'cc';
-  toast(frozen ? 'Card frozen' : 'Card unfrozen');
+  btn.className   = frozen ? 'cc frz' : 'cc';
+
+  // visual freeze overlay on the card face
+  var overlay = document.getElementById('cardFreezeOverlay');
+  if (overlay) overlay.style.display = frozen ? 'flex' : 'none';
+
+  // persistent banner on home
+  var banner = document.getElementById('frozenBanner');
+  if (banner) banner.style.display = frozen ? 'flex' : 'none';
+
+  // push notification
+  pushNotif(
+    frozen ? '🔒 Card Frozen' : '✅ Card Unfrozen',
+    frozen ? 'All transactions are now blocked until you unfreeze.' : 'Your card is active again.',
+    frozen ? 'security' : 'security'
+  );
+  toast(frozen ? '🔒 Card frozen — transactions blocked' : '✅ Card unfrozen');
 }
+
+/* ══════════════════════════════════════════════════
+   FREEZE GUARD  –  called at start of every spend flow
+══════════════════════════════════════════════════ */
+function checkFrozen() {
+  if (frozen) {
+    toast('🔒 Card is frozen — unfreeze first');
+    return true;
+  }
+  return false;
+}
+
+/* ══════════════════════════════════════════════════
+   NOTIFICATION CENTER
+══════════════════════════════════════════════════ */
+var _notifs = [];
+var _notifUnread = 0;
+
+var NOTIF_ICONS = {
+  income:   { bg:'rgba(34,197,94,.15)',   color:'#22c55e',  svg:'<polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/>' },
+  expense:  { bg:'rgba(232,25,44,.12)',   color:'#e8192c',  svg:'<line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/>' },
+  security: { bg:'rgba(245,158,11,.12)', color:'#f59e0b',  svg:'<rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>' },
+  crypto:   { bg:'rgba(124,58,237,.15)', color:'#a78bfa',  svg:'<circle cx="12" cy="12" r="10"/><path d="M9 9h6M9 12h6M9 15h4"/>' },
+  alert:    { bg:'rgba(59,130,246,.12)', color:'#60a5fa',  svg:'<circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>' },
+};
+
+function pushNotif(title, body, type) {
+  type = type || 'alert';
+  _notifs.unshift({ id: Date.now(), title: title, body: body, type: type, time: new Date(), read: false });
+  _notifUnread++;
+  var dot = document.getElementById('notifDot');
+  if (dot) dot.style.display = 'block';
+  var cnt = document.getElementById('notifCount');
+  if (cnt) cnt.textContent = _notifUnread + ' unread';
+}
+
+function openNotifCenter() {
+  renderNotifList();
+  // mark all read
+  _notifs.forEach(function(n){ n.read = true; });
+  _notifUnread = 0;
+  var dot = document.getElementById('notifDot');
+  if (dot) dot.style.display = 'none';
+  document.getElementById('notifOverlay').style.display = 'block';
+}
+function closeNotifCenter() {
+  document.getElementById('notifOverlay').style.display = 'none';
+}
+function clearAllNotifs() {
+  _notifs = [];
+  renderNotifList();
+}
+
+function renderNotifList() {
+  var el = document.getElementById('notifList');
+  var cnt = document.getElementById('notifCount');
+  if (cnt) cnt.textContent = _notifUnread > 0 ? _notifUnread + ' unread' : 'All caught up';
+  if (!_notifs.length) {
+    el.innerHTML = '<div style="text-align:center;padding:3rem 1rem;color:var(--txt2)"><div style="font-size:2.5rem;margin-bottom:.6rem">🔔</div><div style="font-size:.9rem;font-weight:600">No notifications yet</div><div style="font-size:.78rem;margin-top:.3rem;color:var(--txt3)">Activity like deposits, sends, and alerts will appear here.</div></div>';
+    return;
+  }
+  el.innerHTML = _notifs.map(function(n) {
+    var ic = NOTIF_ICONS[n.type] || NOTIF_ICONS.alert;
+    var timeStr = n.time.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}) + ', ' + n.time.toLocaleDateString([],{month:'short',day:'numeric'});
+    return '<div style="display:flex;gap:.85rem;padding:.85rem 0;border-bottom:1px solid rgba(255,255,255,.05);' + (!n.read?'':'') + '">'
+      + '<div style="width:40px;height:40px;border-radius:50%;background:'+ic.bg+';display:grid;place-items:center;flex-shrink:0">'
+      + '<svg viewBox="0 0 24 24" fill="none" stroke="'+ic.color+'" stroke-width="2" style="width:17px;height:17px">'+ic.svg+'</svg>'
+      + '</div>'
+      + '<div style="flex:1;min-width:0">'
+      + '<div style="font-size:.85rem;font-weight:700;color:' + (n.read ? 'var(--txt2)' : 'var(--txt)') + '">' + n.title + '</div>'
+      + '<div style="font-size:.75rem;color:var(--txt2);margin-top:.2rem;line-height:1.4">' + n.body + '</div>'
+      + '<div style="font-size:.65rem;color:var(--txt3);margin-top:.35rem">' + timeStr + '</div>'
+      + '</div>'
+      + (n.read ? '' : '<div style="width:8px;height:8px;border-radius:50%;background:var(--red);flex-shrink:0;margin-top:6px"></div>')
+      + '</div>';
+  }).join('');
+}
+
+/* ══════════════════════════════════════════════════
+   SPENDING ANALYTICS
+══════════════════════════════════════════════════ */
+var _analyticsPeriod = 'all';
+
+var CAT_COLORS = {
+  'Gaming':       '#7c3aed',
+  'Food':         '#ea580c',
+  'Shopping':     '#0369a1',
+  'Cloud':        '#1d4ed8',
+  'Telecom':      '#15803d',
+  'Wallet':       '#b45309',
+  'Crypto':       '#0e7490',
+  'Income':       '#16a34a',
+  'Transfer':     '#64748b',
+  'Other':        '#374151',
+};
+
+function getCatName(name, type) {
+  if (type === 'income') return 'Income';
+  var n = name.toLowerCase();
+  if (/steam|seagm|g2g|free.?fire|azurgames|game|epic/i.test(name)) return 'Gaming';
+  if (/foodpanda|food|uber.?eat/i.test(name))                        return 'Food';
+  if (/daraz|amazon|aliexpress|shop/i.test(name))                    return 'Shopping';
+  if (/google|oracle|microsoft|colab|azure|cloud/i.test(name))       return 'Cloud';
+  if (/grameenphone|telecom|airtel/i.test(name))                     return 'Telecom';
+  if (/bkash|nagad|easy/i.test(name))                                return 'Wallet';
+  if (/buy.*avax|buy.*btc|buy.*eth|buy.*sol|sell/i.test(name))       return 'Crypto';
+  if (/bank transfer|wire transfer/i.test(name))                     return 'Transfer';
+  return 'Other';
+}
+
+function filterTxsByPeriod(txs, period) {
+  var now = new Date();
+  return txs.filter(function(tx) {
+    if (tx.status === 'declined') return false;
+    var d = new Date(tx.date.replace(' ','T'));
+    if (period === '7d')  return (now - d) <= 7*86400000;
+    if (period === '1m')  return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+    if (period === '3m')  return (now - d) <= 90*86400000;
+    return true;
+  });
+}
+
+function openAnalytics() {
+  _analyticsPeriod = 'all';
+  document.querySelectorAll('[id^="ap-"]').forEach(function(b){ b.classList.remove('active'); });
+  var apAll = document.getElementById('ap-all');
+  if (apAll) apAll.classList.add('active');
+  renderAnalytics();
+  document.getElementById('analyticsOverlay').style.display = 'block';
+}
+function closeAnalytics() {
+  document.getElementById('analyticsOverlay').style.display = 'none';
+}
+function setAnalyticsPeriod(p, btn) {
+  _analyticsPeriod = p;
+  document.querySelectorAll('[id^="ap-"]').forEach(function(b){ b.classList.remove('active'); });
+  btn.classList.add('active');
+  renderAnalytics();
+}
+
+function renderAnalytics() {
+  var s = getStore();
+  var txs = filterTxsByPeriod(s.transactions, _analyticsPeriod);
+  var totalOut = 0, totalIn = 0, txCount = 0;
+  var catMap = {};
+  var monthMap = {};
+
+  txs.forEach(function(tx) {
+    var cat = getCatName(tx.name, tx.type);
+    var amt = +tx.amount;
+    if (tx.type === 'income') {
+      totalIn += amt;
+      return;
+    }
+    totalOut += amt;
+    txCount++;
+    catMap[cat] = (catMap[cat] || 0) + amt;
+    // group by month
+    var d = new Date(tx.date.replace(' ','T'));
+    var mk = d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0');
+    monthMap[mk] = (monthMap[mk] || 0) + amt;
+  });
+
+  var avgTx = txCount > 0 ? totalOut / txCount : 0;
+
+  // summary cards
+  var summaryEl = document.getElementById('analyticsSummary');
+  if (summaryEl) summaryEl.innerHTML = [
+    ['Total Spent', '$' + totalOut.toFixed(2), 'var(--red)'],
+    ['Total In',    '$' + totalIn.toFixed(2),  'var(--green)'],
+    ['Avg / Tx',    '$' + avgTx.toFixed(2),    'var(--txt)'],
+  ].map(function(r) {
+    return '<div style="background:#1a1a1a;border:1px solid rgba(255,255,255,.06);border-radius:14px;padding:.8rem .7rem;text-align:center">'
+      + '<div style="font-size:1rem;font-weight:800;color:'+r[2]+'">' + r[1] + '</div>'
+      + '<div style="font-size:.65rem;color:var(--txt2);margin-top:.2rem;font-weight:600">' + r[0] + '</div>'
+      + '</div>';
+  }).join('');
+
+  // subtitle
+  var subtitles = { all:'All time', '3m':'Last 3 months', '1m':'This month', '7d':'Last 7 days' };
+  var sub = document.getElementById('analyticsSubtitle');
+  if (sub) sub.textContent = subtitles[_analyticsPeriod] || 'All time';
+
+  // bar chart
+  drawBarChart(monthMap);
+
+  // category rows
+  var catsEl = document.getElementById('analyticsCats');
+  if (!catsEl) return;
+  var sorted = Object.keys(catMap).sort(function(a,b){ return catMap[b] - catMap[a]; });
+  if (!sorted.length) { catsEl.innerHTML = '<div style="text-align:center;color:var(--txt2);padding:1rem;font-size:.85rem">No expenses in this period</div>'; return; }
+  catsEl.innerHTML = sorted.map(function(cat) {
+    var amt  = catMap[cat];
+    var pct  = totalOut > 0 ? (amt/totalOut*100).toFixed(1) : 0;
+    var col  = CAT_COLORS[cat] || '#374151';
+    return '<div style="background:#1a1a1a;border:1px solid rgba(255,255,255,.05);border-radius:14px;padding:.85rem 1rem">'
+      + '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.55rem">'
+      + '<div style="display:flex;align-items:center;gap:.6rem">'
+      + '<div style="width:10px;height:10px;border-radius:50%;background:'+col+';flex-shrink:0"></div>'
+      + '<span style="font-size:.85rem;font-weight:700">'+cat+'</span>'
+      + '</div>'
+      + '<div style="text-align:right"><span style="font-size:.88rem;font-weight:800;color:var(--red)">$'+amt.toFixed(2)+'</span>'
+      + '<span style="font-size:.7rem;color:var(--txt3);margin-left:.4rem">'+pct+'%</span></div>'
+      + '</div>'
+      + '<div style="height:5px;border-radius:99px;background:rgba(255,255,255,.07);overflow:hidden">'
+      + '<div style="height:100%;width:'+pct+'%;background:'+col+';border-radius:99px;transition:width .5s ease"></div>'
+      + '</div></div>';
+  }).join('');
+}
+
+function drawBarChart(monthMap) {
+  var canvas = document.getElementById('analyticsBarChart');
+  if (!canvas) return;
+  var months = Object.keys(monthMap).sort();
+  if (!months.length) { canvas.style.display = 'none'; return; }
+  canvas.style.display = 'block';
+  var dpr = window.devicePixelRatio || 1;
+  var W = canvas.offsetWidth || 280;
+  var H = 120;
+  canvas.width = W * dpr; canvas.height = H * dpr;
+  canvas.style.width = W + 'px'; canvas.style.height = H + 'px';
+  var ctx = canvas.getContext('2d');
+  ctx.scale(dpr, dpr);
+  ctx.clearRect(0,0,W,H);
+
+  var maxVal = Math.max.apply(null, months.map(function(m){ return monthMap[m]; }));
+  var barW = Math.min(38, (W - 16) / months.length - 6);
+  var gap  = (W - 16 - barW * months.length) / Math.max(months.length - 1, 1);
+  var topPad = 16, botPad = 22, chartH = H - topPad - botPad;
+
+  months.forEach(function(m, i) {
+    var val  = monthMap[m];
+    var barH = maxVal > 0 ? (val / maxVal) * chartH : 0;
+    var x    = 8 + i * (barW + gap);
+    var y    = topPad + chartH - barH;
+
+    // gradient bar
+    var grad = ctx.createLinearGradient(0, y, 0, y + barH);
+    grad.addColorStop(0, 'rgba(232,25,44,0.85)');
+    grad.addColorStop(1, 'rgba(232,25,44,0.25)');
+    ctx.fillStyle = grad;
+    ctx.beginPath();
+    ctx.roundRect ? ctx.roundRect(x, y, barW, barH, [4,4,0,0]) : ctx.rect(x, y, barW, barH);
+    ctx.fill();
+
+    // value label
+    ctx.fillStyle = '#fff';
+    ctx.font = 'bold ' + (dpr > 1 ? 9 : 9) + 'px -apple-system,sans-serif';
+    ctx.textAlign = 'center';
+    if (barH > 18) ctx.fillText('$' + (val>=1000 ? (val/1000).toFixed(1)+'k' : Math.round(val)), x + barW/2, y - 4);
+
+    // month label
+    ctx.fillStyle = 'rgba(255,255,255,.45)';
+    ctx.font = '8px -apple-system,sans-serif';
+    var label = m.slice(5); // MM
+    var monthNames = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    label = monthNames[parseInt(label,10)-1] || label;
+    ctx.fillText(label, x + barW/2, H - 6);
+  });
+}
+
 function copyCard() {
   const txt = '4829 ---- ---- 7741 | Exp: 03/29 | CVV: 742';
   if (navigator.clipboard) navigator.clipboard.writeText(txt);
@@ -2807,6 +3118,21 @@ function deletePayee(payeeId) {
 /* ======================================
    AUTO-LOGIN + INIT
 ====================================== */
+// Seed initial notifications from transaction history
+(function seedNotifs() {
+  var s = getStore();
+  var recent = [...(s.transactions||[])].sort(function(a,b){return b.id-a.id;}).slice(0,5);
+  recent.forEach(function(tx) {
+    var isInc = tx.type === 'income';
+    var title = isInc ? '💰 ' + tx.name + ' Received' : '💳 ' + tx.name;
+    var body  = (isInc ? '+' : '-') + '$' + Number(tx.amount).toFixed(2) + (tx.note ? ' · ' + tx.note : '');
+    _notifs.push({ id: tx.id, title: title, body: body, type: isInc ? 'income' : 'expense', time: new Date(tx.date.replace(' ','T')), read: true });
+  });
+  // low balance warning
+  if (s.balance < 5) {
+    pushNotif('⚠️ Low Balance', 'Your balance is below $5. Consider topping up.', 'alert');
+  }
+})();
 showHome();
 
 /* ======================================
@@ -3299,6 +3625,90 @@ document.addEventListener('DOMContentLoaded', function() {
     <div class="bn active"><div class="bn-ripple"></div><div class="bn-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg></div><span class="bn-lbl">Assets</span></div>
     <div class="bn" onclick="goTab('profile')"><div class="bn-ripple"></div><div class="bn-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div><span class="bn-lbl">Profile</span></div>
   </nav>
+</div>
+
+<!-- ============================================================
+     SPENDING ANALYTICS OVERLAY
+============================================================ -->
+<div id="analyticsOverlay" style="display:none;position:fixed;inset:0;z-index:9000">
+  <div onclick="closeAnalytics()" style="position:absolute;inset:0;background:rgba(0,0,0,.7);backdrop-filter:blur(8px)"></div>
+  <div style="position:absolute;inset:0;display:flex;flex-direction:column;pointer-events:none">
+    <div style="flex:1"></div>
+    <div id="analyticsSheet" style="pointer-events:all;background:#111;border-radius:28px 28px 0 0;border-top:1px solid rgba(255,255,255,.08);max-height:88vh;display:flex;flex-direction:column;animation:slideUp .32s cubic-bezier(.34,1.1,.64,1) both">
+      <!-- handle -->
+      <div style="width:38px;height:4px;border-radius:99px;background:rgba(255,255,255,.15);margin:1rem auto .2rem;flex-shrink:0"></div>
+      <!-- header -->
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:.9rem 1.3rem .5rem;flex-shrink:0">
+        <div>
+          <div style="font-size:1.05rem;font-weight:800">Spending Analytics</div>
+          <div style="font-size:.72rem;color:var(--txt2);margin-top:.1rem" id="analyticsSubtitle">All time</div>
+        </div>
+        <button onclick="closeAnalytics()" style="width:32px;height:32px;border-radius:50%;background:#1e1e1e;border:1px solid rgba(255,255,255,.1);display:grid;place-items:center;color:var(--txt2)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width:13px;height:13px"><path d="M18 6L6 18M6 6l12 12"/></svg>
+        </button>
+      </div>
+      <!-- period filter chips -->
+      <div style="display:flex;gap:.4rem;padding:.3rem 1.3rem .8rem;flex-shrink:0;overflow-x:auto">
+        <button onclick="setAnalyticsPeriod('all',this)"  class="net-pill active" id="ap-all">All time</button>
+        <button onclick="setAnalyticsPeriod('3m',this)"   class="net-pill" id="ap-3m">3 Months</button>
+        <button onclick="setAnalyticsPeriod('1m',this)"   class="net-pill" id="ap-1m">This Month</button>
+        <button onclick="setAnalyticsPeriod('7d',this)"   class="net-pill" id="ap-7d">7 Days</button>
+      </div>
+      <!-- scrollable body -->
+      <div style="overflow-y:auto;flex:1;padding:0 1.1rem 2rem">
+        <!-- summary row -->
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:.6rem;margin-bottom:1.2rem" id="analyticsSummary"></div>
+        <!-- bar chart -->
+        <div style="background:#1a1a1a;border-radius:18px;border:1px solid rgba(255,255,255,.06);padding:1.1rem 1rem 1rem;margin-bottom:1rem">
+          <div style="font-size:.78rem;font-weight:700;color:var(--txt2);margin-bottom:.9rem">Monthly Spend</div>
+          <canvas id="analyticsBarChart" style="width:100%;display:block" height="120"></canvas>
+        </div>
+        <!-- category breakdown -->
+        <div style="font-size:.78rem;font-weight:700;color:var(--txt2);margin-bottom:.6rem;text-transform:uppercase;letter-spacing:.08em">By Category</div>
+        <div id="analyticsCats" style="display:flex;flex-direction:column;gap:.5rem"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================
+     NOTIFICATION CENTER OVERLAY
+============================================================ -->
+<div id="notifOverlay" style="display:none;position:fixed;inset:0;z-index:9001">
+  <div onclick="closeNotifCenter()" style="position:absolute;inset:0;background:rgba(0,0,0,.7);backdrop-filter:blur(8px)"></div>
+  <div style="position:absolute;inset:0;display:flex;flex-direction:column;pointer-events:none">
+    <div style="flex:1"></div>
+    <div style="pointer-events:all;background:#111;border-radius:28px 28px 0 0;border-top:1px solid rgba(255,255,255,.08);max-height:82vh;display:flex;flex-direction:column;animation:slideUp .32s cubic-bezier(.34,1.1,.64,1) both">
+      <div style="width:38px;height:4px;border-radius:99px;background:rgba(255,255,255,.15);margin:1rem auto .2rem;flex-shrink:0"></div>
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:.9rem 1.3rem .6rem;flex-shrink:0">
+        <div>
+          <div style="font-size:1.05rem;font-weight:800">Notifications</div>
+          <div style="font-size:.72rem;color:var(--txt2);margin-top:.1rem" id="notifCount">0 unread</div>
+        </div>
+        <div style="display:flex;gap:.6rem;align-items:center">
+          <button onclick="clearAllNotifs()" style="font-size:.75rem;font-weight:700;color:var(--txt2);background:none;border:none;cursor:pointer">Clear all</button>
+          <button onclick="closeNotifCenter()" style="width:32px;height:32px;border-radius:50%;background:#1e1e1e;border:1px solid rgba(255,255,255,.1);display:grid;place-items:center;color:var(--txt2)">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width:13px;height:13px"><path d="M18 6L6 18M6 6l12 12"/></svg>
+          </button>
+        </div>
+      </div>
+      <div id="notifList" style="overflow-y:auto;flex:1;padding:0 1.1rem 2rem"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================
+     FROZEN CARD BANNER (shown on home when card is frozen)
+============================================================ -->
+<div id="frozenBanner" style="display:none;position:fixed;bottom:80px;left:50%;transform:translateX(-50%);z-index:8000;background:#1a0a0a;border:1.5px solid rgba(232,25,44,.4);border-radius:16px;padding:.75rem 1.1rem;display:none;align-items:center;gap:.7rem;max-width:340px;width:calc(100% - 2rem);box-shadow:0 8px 32px rgba(232,25,44,.2)">
+  <div style="width:36px;height:36px;border-radius:50%;background:rgba(232,25,44,.15);display:grid;place-items:center;flex-shrink:0">
+    <svg viewBox="0 0 24 24" fill="none" stroke="var(--red)" stroke-width="2" style="width:18px;height:18px"><path d="M12 2v20M4.93 4.93l14.14 14.14M2 12h20M4.93 19.07 19.07 4.93"/></svg>
+  </div>
+  <div style="flex:1">
+    <div style="font-size:.82rem;font-weight:700;color:var(--red)">Card Frozen</div>
+    <div style="font-size:.7rem;color:var(--txt2);margin-top:.1rem">All transactions are blocked</div>
+  </div>
+  <button onclick="goTab('card')" style="font-size:.72rem;font-weight:700;color:var(--txt2);background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:.3rem .65rem;cursor:pointer">Manage</button>
 </div>
 
 <!-- TRANSACTION DETAIL OVERLAY -->
