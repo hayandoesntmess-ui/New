@@ -1406,6 +1406,200 @@ button{cursor:pointer;border:none;background:none}
       <div onclick="closeSheet('sheetMore');goTab('send')" style="background:var(--card2);border:1px solid var(--border2);border-radius:var(--r);padding:1.1rem;text-align:center;cursor:pointer"><svg style="width:24px;height:24px;color:var(--blue);display:block;margin:0 auto .5rem" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg><div style="font-size:.82rem;font-weight:600">Send</div></div>
       <div onclick="closeSheet('sheetMore');openSwap()" style="background:var(--card2);border:1px solid var(--border2);border-radius:var(--r);padding:1.1rem;text-align:center;cursor:pointer"><svg style="width:24px;height:24px;color:var(--amber);display:block;margin:0 auto .5rem" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg><div style="font-size:.82rem;font-weight:600">Swap</div></div>
       <div onclick="closeSheet('sheetMore');goTab('card')" style="background:var(--card2);border:1px solid var(--border2);border-radius:var(--r);padding:1.1rem;text-align:center;cursor:pointer"><svg style="width:24px;height:24px;color:var(--red);display:block;margin:0 auto .5rem" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg><div style="font-size:.82rem;font-weight:600">Card</div></div>
+      <div onclick="closeSheet('sheetMore');openP2P()" style="background:var(--card2);border:1px solid var(--border2);border-radius:var(--r);padding:1.1rem;text-align:center;cursor:pointer"><svg style="width:24px;height:24px;color:#9945FF;display:block;margin:0 auto .5rem" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg><div style="font-size:.82rem;font-weight:600">P2P</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- ================================
+     P2P MARKETPLACE SCREEN
+================================ -->
+<div class="screen" id="scrP2P" style="padding-bottom:0">
+  <!-- Header -->
+  <div class="app-bar" style="padding-bottom:.6rem">
+    <button onclick="closeP2P()" style="width:36px;height:36px;border-radius:50%;display:grid;place-items:center;background:none">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" style="width:20px;height:20px"><polyline points="15 18 9 12 15 6"/></svg>
+    </button>
+    <div style="display:flex;gap:1rem">
+      <span style="font-size:.95rem;font-weight:500;color:var(--txt3)">Express</span>
+      <span style="font-size:.95rem;font-weight:700;color:var(--txt)">Marketplace</span>
+    </div>
+    <div style="display:flex;align-items:center;gap:.3rem;background:var(--card2);border:1px solid var(--border2);border-radius:20px;padding:.32rem .75rem;cursor:pointer" onclick="toast('Currency selector coming soon')">
+      <span style="font-size:.82rem;font-weight:700">BDT</span>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width:12px;height:12px"><polyline points="6 9 12 15 18 9"/></svg>
+    </div>
+  </div>
+
+  <div style="overflow-y:auto;height:calc(100vh - 56px);-webkit-overflow-scrolling:touch;padding-bottom:1.5rem">
+    <!-- Promo banner -->
+    <div style="margin:.2rem 1rem .9rem;background:linear-gradient(135deg,#1e1e2e,#2a1a3e);border:1px solid rgba(153,69,255,.25);border-radius:var(--r);padding:1rem 1.2rem;display:flex;align-items:center;justify-content:space-between">
+      <div>
+        <div style="font-size:.92rem;font-weight:700;margin-bottom:.2rem">Get more visibility with<br>Recommended Ads</div>
+        <div style="font-size:.78rem;color:var(--txt2)">Learn more</div>
+      </div>
+      <div style="font-size:2.4rem;filter:drop-shadow(0 2px 8px rgba(153,69,255,.4))">🏆</div>
+    </div>
+
+    <!-- Buy / Sell tabs -->
+    <div style="display:flex;margin:0 1rem .9rem;background:var(--card2);border-radius:10px;padding:.25rem">
+      <button id="p2pTabBuy" onclick="setP2PTab('buy')" style="flex:1;padding:.6rem;border-radius:8px;font-size:.9rem;font-weight:700;background:var(--bg);color:var(--txt);border:none;transition:background .18s">Buy</button>
+      <button id="p2pTabSell" onclick="setP2PTab('sell')" style="flex:1;padding:.6rem;border-radius:8px;font-size:.9rem;font-weight:600;background:none;color:var(--txt3);border:none;transition:background .18s">Sell</button>
+    </div>
+
+    <!-- Filters -->
+    <div style="display:flex;align-items:center;gap:.5rem;padding:0 1rem .9rem;overflow-x:auto">
+      <div style="display:flex;align-items:center;gap:.35rem;background:var(--card2);border:1px solid var(--border2);border-radius:20px;padding:.38rem .75rem;white-space:nowrap;cursor:pointer">
+        <div style="width:16px;height:16px;border-radius:50%;background:#26A17B;display:grid;place-items:center;font-size:.55rem;font-weight:800;color:#fff">T</div>
+        <span style="font-size:.8rem;font-weight:700">USDT</span>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width:11px;height:11px;color:var(--txt3)"><polyline points="6 9 12 15 18 9"/></svg>
+      </div>
+      <div style="display:flex;align-items:center;gap:.3rem;background:var(--card2);border:1px solid var(--border2);border-radius:20px;padding:.38rem .75rem;white-space:nowrap;cursor:pointer">
+        <span style="font-size:.8rem;font-weight:600;color:var(--txt2)">Amount</span>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width:11px;height:11px;color:var(--txt3)"><polyline points="6 9 12 15 18 9"/></svg>
+      </div>
+      <div style="display:flex;align-items:center;gap:.3rem;background:var(--card2);border:1px solid var(--border2);border-radius:20px;padding:.38rem .75rem;white-space:nowrap;cursor:pointer">
+        <span style="font-size:.8rem;font-weight:600;color:var(--txt2)">Payment</span>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width:11px;height:11px;color:var(--txt3)"><polyline points="6 9 12 15 18 9"/></svg>
+      </div>
+      <div style="display:grid;place-items:center;background:var(--card2);border:1px solid var(--border2);border-radius:50%;width:34px;height:34px;flex-shrink:0;cursor:pointer">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:15px;height:15px"><line x1="4" y1="6" x2="20" y2="6"/><line x1="8" y1="12" x2="16" y2="12"/><line x1="11" y1="18" x2="13" y2="18"/></svg>
+      </div>
+    </div>
+
+    <!-- Seller listings -->
+    <div id="p2pListings" style="display:flex;flex-direction:column;gap:.7rem;padding:0 1rem"></div>
+  </div>
+
+  <!-- P2P bottom nav -->
+  <nav style="position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:calc(100% - 24px);max-width:456px;background:rgba(18,18,18,0.92);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);border:1px solid rgba(255,255,255,0.08);border-radius:24px 24px 0 0;display:flex;padding:.55rem 0 1.1rem;z-index:100;box-shadow:0 -8px 32px rgba(0,0,0,.45)">
+    <div onclick="toast('P2P section')" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:.22rem;cursor:pointer">
+      <div style="width:36px;height:36px;border-radius:14px;background:var(--red);box-shadow:0 4px 16px rgba(232,25,44,.45);display:grid;place-items:center;transform:translateY(-4px)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" style="width:18px;height:18px"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>
+      </div>
+      <span style="font-size:.58rem;font-weight:700;color:var(--red)">P2P</span>
+    </div>
+    <div onclick="toast('Orders coming soon')" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:.22rem;cursor:pointer;padding:.2rem 0">
+      <div style="width:36px;height:36px;border-radius:14px;display:grid;place-items:center">
+        <svg viewBox="0 0 24 24" fill="none" stroke="var(--txt3)" stroke-width="2.2" style="width:18px;height:18px"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+      </div>
+      <span style="font-size:.58rem;font-weight:700;color:var(--txt3)">Orders</span>
+    </div>
+    <div onclick="toast('Chat coming soon')" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:.22rem;cursor:pointer;padding:.2rem 0;position:relative">
+      <div style="width:36px;height:36px;border-radius:14px;display:grid;place-items:center">
+        <svg viewBox="0 0 24 24" fill="none" stroke="var(--txt3)" stroke-width="2.2" style="width:18px;height:18px"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
+      </div>
+      <span style="font-size:.58rem;font-weight:700;color:var(--txt3)">Chat</span>
+      <div style="position:absolute;top:4px;right:calc(50% - 22px);width:16px;height:16px;border-radius:50%;background:var(--red);border:2px solid var(--bg);font-size:.55rem;font-weight:800;color:#fff;display:grid;place-items:center">2</div>
+    </div>
+    <div onclick="toast('Ads coming soon')" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:.22rem;cursor:pointer;padding:.2rem 0">
+      <div style="width:36px;height:36px;border-radius:14px;display:grid;place-items:center">
+        <svg viewBox="0 0 24 24" fill="none" stroke="var(--txt3)" stroke-width="2.2" style="width:18px;height:18px"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+      </div>
+      <span style="font-size:.58rem;font-weight:700;color:var(--txt3)">Ads</span>
+    </div>
+    <div onclick="openP2PProfile()" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:.22rem;cursor:pointer;padding:.2rem 0">
+      <div style="width:36px;height:36px;border-radius:14px;display:grid;place-items:center">
+        <svg viewBox="0 0 24 24" fill="none" stroke="var(--txt3)" stroke-width="2.2" style="width:18px;height:18px"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+      </div>
+      <span style="font-size:.58rem;font-weight:700;color:var(--txt3)">Profile</span>
+    </div>
+  </nav>
+</div>
+
+<!-- ================================
+     P2P PROFILE SHEET
+================================ -->
+<div class="sheet-overlay" id="sheetP2PProfile">
+  <div class="sheet" style="position:relative;max-height:82vh;overflow-y:auto">
+    <div class="sheet-handle"></div>
+    <button class="sheet-close" onclick="closeSheet('sheetP2PProfile')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px"><path d="M18 6L6 18M6 6l12 12"/></svg></button>
+
+    <!-- Header -->
+    <div style="display:flex;align-items:center;gap:.85rem;margin-bottom:1.4rem">
+      <div style="width:54px;height:54px;border-radius:14px;background:#e8192c;display:grid;place-items:center;font-size:1.5rem;font-weight:800;color:#fff;flex-shrink:0">j</div>
+      <div>
+        <div style="font-size:.95rem;font-weight:700;margin-bottom:.3rem">jaw****@gmail.com
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;display:inline;margin-left:.3rem;vertical-align:middle;color:var(--txt3)"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+        </div>
+        <div style="display:flex;align-items:center;gap:.6rem;flex-wrap:wrap">
+          <span style="display:flex;align-items:center;gap:.22rem;font-size:.7rem;color:var(--green)"><svg viewBox="0 0 24 24" fill="var(--green)" style="width:12px;height:12px"><path d="M9 16.2L4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4z"/></svg>Phone number</span>
+          <span style="display:flex;align-items:center;gap:.22rem;font-size:.7rem;color:var(--green)"><svg viewBox="0 0 24 24" fill="var(--green)" style="width:12px;height:12px"><path d="M9 16.2L4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4z"/></svg>Email</span>
+          <span style="display:flex;align-items:center;gap:.22rem;font-size:.7rem;color:var(--green)"><svg viewBox="0 0 24 24" fill="var(--green)" style="width:12px;height:12px"><path d="M9 16.2L4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4z"/></svg>Identity verification</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- P2P Funds -->
+    <div style="background:var(--card2);border:1px solid var(--border2);border-radius:var(--r);padding:1rem 1.1rem;margin-bottom:1rem">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.9rem">
+        <span style="font-size:.92rem;font-weight:700">My P2P funds</span>
+        <span style="font-size:.78rem;color:var(--blue);font-weight:600;display:flex;align-items:center;gap:.2rem">View more <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width:11px;height:11px"><polyline points="9 18 15 12 9 6"/></svg></span>
+      </div>
+      <div style="display:flex;justify-content:space-between;margin-bottom:.55rem">
+        <span style="font-size:.8rem;color:var(--txt2)">Available</span>
+        <span style="font-size:.88rem;font-weight:700;color:var(--txt)" id="p2pAvailableUSDT">0.00 USDT</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;margin-bottom:.55rem">
+        <span style="font-size:.8rem;color:var(--txt2)">Active trades</span>
+        <span style="font-size:.88rem;font-weight:700;color:var(--txt)">0 USDT</span>
+      </div>
+      <div style="display:flex;justify-content:space-between">
+        <span style="font-size:.8rem;color:var(--txt2)">Security deposit</span>
+        <span style="font-size:.88rem;font-weight:700;color:var(--txt)">0 USDT</span>
+      </div>
+    </div>
+
+    <!-- Account info -->
+    <div style="background:var(--card2);border:1px solid var(--border2);border-radius:var(--r);padding:1rem 1.1rem;margin-bottom:1rem">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.9rem">
+        <span style="font-size:.92rem;font-weight:700">Account info</span>
+        <span style="font-size:.78rem;color:var(--blue);font-weight:600;display:flex;align-items:center;gap:.2rem">View more <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width:11px;height:11px"><polyline points="9 18 15 12 9 6"/></svg></span>
+      </div>
+      <div style="display:flex;justify-content:space-between;margin-bottom:.55rem">
+        <span style="font-size:.8rem;color:var(--txt2)">Trades in last 30 days</span>
+        <span style="font-size:.88rem;font-weight:700">1</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;margin-bottom:.55rem">
+        <span style="font-size:.8rem;color:var(--txt2);border-bottom:1px dashed var(--border2)">Completion rate in last 30 days</span>
+        <span style="font-size:.88rem;font-weight:700;color:var(--green)">100%</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;margin-bottom:.55rem">
+        <span style="font-size:.8rem;color:var(--txt2)">Avg. payment time</span>
+        <span style="font-size:.88rem;font-weight:700">5 Minute(s)</span>
+      </div>
+      <div style="display:flex;justify-content:space-between">
+        <span style="font-size:.8rem;color:var(--txt2)">Avg. crypto release time</span>
+        <span style="font-size:.88rem;font-weight:700">0 Minute(s)</span>
+      </div>
+    </div>
+
+    <!-- Menu items -->
+    <div style="display:flex;flex-direction:column;gap:.5rem">
+      <div onclick="toast('Payment methods coming soon')" style="display:flex;align-items:center;gap:.85rem;padding:1rem;background:var(--card2);border:1px solid var(--border2);border-radius:var(--r);cursor:pointer">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:19px;height:19px;color:var(--txt2)"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+        <span style="flex:1;font-size:.88rem;font-weight:600">Payment method</span>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:15px;height:15px;color:var(--txt3)"><polyline points="9 18 15 12 9 6"/></svg>
+      </div>
+      <div onclick="toast('Advertiser application coming soon')" style="display:flex;align-items:center;gap:.85rem;padding:1rem;background:var(--card2);border:1px solid var(--border2);border-radius:var(--r);cursor:pointer">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:19px;height:19px;color:var(--txt2)"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+        <span style="flex:1;font-size:.88rem;font-weight:600">Become a advertiser</span>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:15px;height:15px;color:var(--txt3)"><polyline points="9 18 15 12 9 6"/></svg>
+      </div>
+      <div onclick="toast('P2P Help Center coming soon')" style="display:flex;align-items:center;gap:.85rem;padding:1rem;background:var(--card2);border:1px solid var(--border2);border-radius:var(--r);cursor:pointer">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:19px;height:19px;color:var(--txt2)"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+        <span style="flex:1;font-size:.88rem;font-weight:600">P2P Help Center</span>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:15px;height:15px;color:var(--txt3)"><polyline points="9 18 15 12 9 6"/></svg>
+      </div>
+      <div onclick="toast('Activities & announcements coming soon')" style="display:flex;align-items:center;gap:.85rem;padding:1rem;background:var(--card2);border:1px solid var(--border2);border-radius:var(--r);cursor:pointer">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:19px;height:19px;color:var(--txt2)"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+        <span style="flex:1;font-size:.88rem;font-weight:600">Activities &amp; announcements</span>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:15px;height:15px;color:var(--txt3)"><polyline points="9 18 15 12 9 6"/></svg>
+      </div>
+      <div onclick="toast('Block users feature coming soon')" style="display:flex;align-items:center;gap:.85rem;padding:1rem;background:var(--card2);border:1px solid var(--border2);border-radius:var(--r);cursor:pointer">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:19px;height:19px;color:var(--txt2)"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg>
+        <span style="flex:1;font-size:.88rem;font-weight:600">Block users</span>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:15px;height:15px;color:var(--txt3)"><polyline points="9 18 15 12 9 6"/></svg>
+      </div>
     </div>
   </div>
 </div>
@@ -3567,6 +3761,111 @@ document.addEventListener('DOMContentLoaded', function() {
   var pi = document.getElementById('cardPinInput');
   if (pi) pi.addEventListener('keydown', function(e) { if (e.key === 'Enter') verifyCardPin(); });
 });
+
+/* ======================================
+   P2P MARKETPLACE
+====================================== */
+var p2pTab = 'buy';
+
+var P2P_SELLERS = [
+  { name:'__Fast_VIP_Bazar__', badge:'⭐', trades:5185, rate:100, price:129.99, limitMin:1000, limitMax:80000, avail:2387.09, methods:['bKash','Nagad','Rocket'], time:15, recommended:true },
+  { name:'Nexa-Trading-CO',    badge:'',   trades:0,    rate:0,   price:127.50, limitMin:6500,  limitMax:15000, avail:1000.00, methods:['Bank Transfer (BDT)','bKash','Nagad'], time:15, recommended:false },
+  { name:'SMART-EXCHANGER',    badge:'',   trades:172,  rate:96,  price:128.75, limitMin:2000,  limitMax:50000, avail:890.00,  methods:['bKash','Nagad'], time:10, recommended:false },
+  { name:'CryptoKing_BD',      badge:'🔥', trades:3421, rate:99,  price:130.10, limitMin:500,   limitMax:30000, avail:3120.50, methods:['bKash','Rocket'], time:12, recommended:false },
+  { name:'SafeTrader247',      badge:'',   trades:812,  rate:97,  price:127.00, limitMin:1000,  limitMax:20000, avail:560.00,  methods:['Nagad','Bank Transfer (BDT)'], time:20, recommended:false },
+  { name:'BD_ExchangePro',     badge:'💎', trades:9874, rate:100, price:129.50, limitMin:3000,  limitMax:100000,avail:5200.00, methods:['bKash','Nagad','Rocket','Bank Transfer (BDT)'], time:8, recommended:false },
+  { name:'QuickFlip_USDT',     badge:'',   trades:441,  rate:95,  price:126.80, limitMin:500,   limitMax:10000, avail:320.00,  methods:['bKash'], time:30, recommended:false },
+  { name:'TrustSwap_Official', badge:'✅', trades:2260, rate:98,  price:128.00, limitMin:2000,  limitMax:60000, avail:1800.00, methods:['Nagad','bKash'], time:15, recommended:false },
+  { name:'MegaExchange_BD',    badge:'🔥', trades:6103, rate:99,  price:129.25, limitMin:5000,  limitMax:200000,avail:9500.00, methods:['Bank Transfer (BDT)','bKash','Nagad'], time:18, recommended:false },
+];
+
+var P2P_METHOD_COLORS = {
+  'bKash': '#E2136E',
+  'Nagad': '#F7941D',
+  'Rocket': '#8247E5',
+  'Bank Transfer (BDT)': '#3b82f6',
+};
+
+function openP2P() {
+  var scr = document.getElementById('scrP2P');
+  if (!scr) return;
+  scr.classList.add('active');
+  renderP2PListings();
+  updateP2PProfileBalance();
+}
+
+function closeP2P() {
+  var scr = document.getElementById('scrP2P');
+  if (scr) scr.classList.remove('active');
+}
+
+function setP2PTab(tab) {
+  p2pTab = tab;
+  var buyBtn = document.getElementById('p2pTabBuy');
+  var sellBtn = document.getElementById('p2pTabSell');
+  if (tab === 'buy') {
+    buyBtn.style.background = 'var(--bg)'; buyBtn.style.color = 'var(--txt)'; buyBtn.style.fontWeight = '700';
+    sellBtn.style.background = 'none'; sellBtn.style.color = 'var(--txt3)'; sellBtn.style.fontWeight = '600';
+  } else {
+    sellBtn.style.background = 'var(--bg)'; sellBtn.style.color = 'var(--txt)'; sellBtn.style.fontWeight = '700';
+    buyBtn.style.background = 'none'; buyBtn.style.color = 'var(--txt3)'; buyBtn.style.fontWeight = '600';
+  }
+  renderP2PListings();
+}
+
+function renderP2PListings() {
+  var container = document.getElementById('p2pListings');
+  if (!container) return;
+  var sellers = p2pTab === 'buy' ? P2P_SELLERS : P2P_SELLERS.slice().reverse().map(function(s) {
+    return Object.assign({}, s, { price: parseFloat((s.price - 1.5 + Math.random()).toFixed(2)) });
+  });
+  container.innerHTML = sellers.map(function(s, i) {
+    var methodPills = s.methods.map(function(m) {
+      var color = P2P_METHOD_COLORS[m] || '#888';
+      return '<span style="font-size:.68rem;font-weight:700;color:' + color + ';background:' + color + '1a;border-radius:4px;padding:.12rem .42rem;white-space:nowrap">' + m + '</span>';
+    }).join('');
+    var badgeHtml = s.badge ? '<span style="font-size:.85rem;margin-left:.3rem">' + s.badge + '</span>' : '';
+    var recBadge = s.recommended ? '<div style="position:absolute;top:-1px;right:-1px;background:var(--card);border:1px solid #e8192c;border-radius:0 var(--r) 0 8px;padding:.2rem .6rem;font-size:.7rem;font-weight:700;color:#e8192c">Recommended</div>' : '';
+    return '<div style="position:relative;background:var(--card);border:1px solid ' + (s.recommended ? 'rgba(232,25,44,.5)' : 'var(--border2)') + ';border-radius:var(--r);padding:1rem 1rem 1rem">' +
+      recBadge +
+      '<div style="display:flex;align-items:center;gap:.65rem;margin-bottom:.6rem">' +
+        '<div style="width:36px;height:36px;border-radius:50%;background:var(--card2);border:1px solid var(--border2);display:grid;place-items:center;font-size:.75rem;font-weight:800;color:var(--txt);flex-shrink:0;position:relative">' +
+          s.name[0] +
+          '<div style="position:absolute;bottom:0;right:0;width:10px;height:10px;border-radius:50%;background:var(--green);border:2px solid var(--bg)"></div>' +
+        '</div>' +
+        '<div style="flex:1;min-width:0">' +
+          '<div style="font-size:.88rem;font-weight:700;display:flex;align-items:center;gap:.2rem">' + s.name + badgeHtml + '</div>' +
+          '<div style="font-size:.7rem;color:var(--txt3);margin-top:.08rem"><span style="text-decoration:underline">Trades</span> ' + s.trades + ' · ' + s.rate + '%</div>' +
+        '</div>' +
+        '<div style="display:flex;flex-direction:column;gap:.25rem;align-items:flex-end">' + methodPills + '</div>' +
+      '</div>' +
+      '<div style="display:flex;align-items:flex-end;justify-content:space-between">' +
+        '<div>' +
+          '<div style="font-size:1.8rem;font-weight:900;line-height:1.1">Tk <span style="font-size:2rem">' + s.price.toFixed(2) + '</span><span style="font-size:.85rem;font-weight:600;color:var(--txt2)">/USDT</span></div>' +
+          '<div style="font-size:.72rem;color:var(--txt2);margin-top:.35rem">Limit <strong>' + s.limitMin.toLocaleString() + '.00 - ' + s.limitMax.toLocaleString() + '.00 BDT</strong></div>' +
+          '<div style="font-size:.72rem;color:var(--txt2)">Available <strong>' + s.avail.toFixed(2) + ' USDT</strong></div>' +
+        '</div>' +
+        '<div style="display:flex;flex-direction:column;align-items:flex-end;gap:.5rem">' +
+          '<div style="display:flex;align-items:center;gap:.25rem;font-size:.7rem;color:var(--txt3)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:11px;height:11px"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg> ' + s.time + ' min</div>' +
+          '<button onclick="toast(\'Opening trade with ' + s.name.replace(/'/g,"\\'") + '...\')" style="padding:.6rem 1.3rem;background:var(--green);color:#fff;border-radius:10px;font-size:.88rem;font-weight:700;border:none;box-shadow:0 3px 12px rgba(34,197,94,.3);cursor:pointer">' + (p2pTab === 'buy' ? 'Buy' : 'Sell') + '</button>' +
+        '</div>' +
+      '</div>' +
+    '</div>';
+  }).join('');
+}
+
+function openP2PProfile() {
+  updateP2PProfileBalance();
+  openSheet('sheetP2PProfile');
+}
+
+function updateP2PProfileBalance() {
+  var store = getStore();
+  var bal = store.balance || 0;
+  // Convert USD balance to USDT (1:1 since USDT = $1)
+  var el = document.getElementById('p2pAvailableUSDT');
+  if (el) el.textContent = bal.toFixed(4) + ' USDT';
+}
 
 </script>
 
