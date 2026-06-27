@@ -29,6 +29,8 @@ button{cursor:pointer;border:none;background:none}
 /*  ANIMATIONS  */
 @keyframes fadeUp{from{opacity:0;transform:translateY(22px)}to{opacity:1;transform:none}}
 @keyframes fadeIn{from{opacity:0}to{opacity:1}}
+@keyframes scrnIn{from{opacity:0;transform:translateY(14px) scale(.985)}to{opacity:1;transform:translateY(0) scale(1)}}
+@keyframes scrnOut{from{opacity:1;transform:translateY(0) scale(1)}to{opacity:0;transform:translateY(-8px) scale(.99)}}
 @keyframes shimmer{0%{background-position:-200% 0}100%{background-position:200% 0}}
 @keyframes scanG{0%{top:-8%}100%{top:108%}}
 @keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.4;transform:scale(1.4)}}
@@ -135,16 +137,33 @@ button{cursor:pointer;border:none;background:none}
    SCREEN SYSTEM
 ================================== */
 .screen{
-  display:none;
+  display:block;
   position:fixed;inset:0;
   background:var(--bg);
   overflow-y:auto;
   -webkit-overflow-scrolling:touch;
-  padding-bottom:80px;
-  animation:fadeIn .2s ease;
+  padding-bottom:100px;
+  /* hidden state — opacity+pointer-events instead of display:none */
+  opacity:0;
+  pointer-events:none;
+  transform:translateY(14px) scale(.985);
+  transition:opacity .26s ease, transform .26s cubic-bezier(.25,.46,.45,.94);
+  will-change:opacity,transform;
+  z-index:1;
 }
-.screen.active{display:block}
-/* Login has no bottom padding */
+.screen.active{
+  opacity:1;
+  pointer-events:auto;
+  transform:translateY(0) scale(1);
+  z-index:2;
+}
+.screen.leaving{
+  opacity:0;
+  transform:translateY(-8px) scale(.99);
+  pointer-events:none;
+  transition:opacity .22s ease, transform .22s ease;
+  z-index:1;
+}
 
 /* ==================================
    LOGIN
@@ -202,74 +221,80 @@ button{cursor:pointer;border:none;background:none}
 .notif-dot{position:absolute;top:3px;right:3px;width:8px;height:8px;border-radius:50%;background:var(--red);border:2px solid var(--bg);animation:pulse 2s infinite}
 
 /* ==================================
-   GLASS BOTTOM NAV
+   GLASS CAPSULE BOTTOM NAV
 ================================== */
 .bot-nav{
-  position:fixed;bottom:0;left:50%;transform:translateX(-50%);
-  width:calc(100% - 24px);max-width:456px;
-  background:rgba(18,18,18,0.72);
-  backdrop-filter:blur(24px) saturate(180%);
-  -webkit-backdrop-filter:blur(24px) saturate(180%);
-  border:1px solid rgba(255,255,255,0.08);
-  border-radius:24px 24px 0 0;
+  position:fixed;bottom:10px;left:50%;transform:translateX(-50%);
+  width:calc(100% - 32px);max-width:440px;
+  background:rgba(22,22,22,0.82);
+  backdrop-filter:blur(32px) saturate(200%);
+  -webkit-backdrop-filter:blur(32px) saturate(200%);
+  border:1px solid rgba(255,255,255,0.10);
+  border-radius:999px;
   display:flex;
-  padding:.55rem 0 1.1rem;
+  padding:.52rem .4rem;
   z-index:100;
-  box-shadow:0 -8px 32px rgba(0,0,0,.45), inset 0 1px 0 rgba(255,255,255,.06);
+  box-shadow:
+    0 8px 32px rgba(0,0,0,.55),
+    0 1px 0 rgba(255,255,255,.07) inset,
+    0 -1px 0 rgba(0,0,0,.4) inset;
+  user-select:none;
+  -webkit-user-select:none;
+  overflow:hidden;
 }
-/* sliding pill indicator */
-.bot-nav::before{
-  content:'';
+
+/* sliding glass bubble */
+.nav-bubble{
   position:absolute;
-  top:0; left:0;
-  height:2px;
-  width:20%;
-  border-radius:0 0 3px 3px;
-  background:linear-gradient(90deg,transparent,var(--red),transparent);
-  transition:left .38s cubic-bezier(.34,1.56,.64,1);
+  top:.38rem;
+  height:calc(100% - .76rem);
+  border-radius:999px;
+  background:rgba(45,45,48,0.95);
+  box-shadow:
+    0 2px 12px rgba(0,0,0,.5),
+    0 1px 0 rgba(255,255,255,.12) inset,
+    0 -1px 0 rgba(0,0,0,.3) inset;
+  /* shimmer overlay */
+  pointer-events:none;
+  will-change:transform,width;
+  z-index:0;
+  /* shimmer pseudo handled via ::after */
+}
+.nav-bubble::after{
+  content:'';
+  position:absolute;inset:0;
+  border-radius:inherit;
+  background:linear-gradient(135deg,
+    rgba(255,255,255,.09) 0%,
+    rgba(255,255,255,.03) 40%,
+    rgba(255,255,255,.0) 60%,
+    rgba(255,255,255,.05) 100%);
   pointer-events:none;
 }
-.bot-nav[data-active="0"]::before{left:0%}
-.bot-nav[data-active="1"]::before{left:20%}
-.bot-nav[data-active="2"]::before{left:40%}
-.bot-nav[data-active="3"]::before{left:60%}
-.bot-nav[data-active="4"]::before{left:80%}
 
 .bn{
-  flex:1;display:flex;flex-direction:column;align-items:center;gap:.22rem;
-  cursor:pointer;padding:.2rem 0;
-  transition:transform .22s cubic-bezier(.34,1.56,.64,1);
+  flex:1;display:flex;flex-direction:column;align-items:center;gap:.18rem;
+  cursor:pointer;padding:.28rem .2rem;
   -webkit-tap-highlight-color:transparent;
   position:relative;
+  z-index:1;
+  transition:opacity .18s ease;
+  touch-action:none;
 }
-.bn:active{transform:scale(.88)}
 .bn-ic{
-  width:36px;height:36px;border-radius:14px;display:grid;place-items:center;
-  transition:background .28s ease, transform .28s cubic-bezier(.34,1.56,.64,1), box-shadow .28s ease;
+  width:34px;height:34px;border-radius:50%;display:grid;place-items:center;
+  transition:transform .22s cubic-bezier(.34,1.56,.64,1);
 }
-.bn.active .bn-ic{
-  background:var(--red);
-  box-shadow:0 4px 16px rgba(232,25,44,.45);
-  transform:translateY(-4px) scale(1.1);
-}
+.bn.active .bn-ic{transform:scale(1.08)}
 .bn.active .bn-ic svg{color:#fff}
-.bn-ic svg{width:18px;height:18px;color:var(--txt3);transition:color .22s ease}
+.bn-ic svg{width:18px;height:18px;color:rgba(255,255,255,0.38);transition:color .22s ease}
 .bn-lbl{
-  font-size:.58rem;font-weight:700;color:var(--txt3);
-  transition:color .22s ease, opacity .22s ease;
+  font-size:.58rem;font-weight:700;color:rgba(255,255,255,0.35);
+  transition:color .22s ease;
   letter-spacing:.02em;
 }
 .bn.active .bn-lbl{color:var(--red)}
-
-/* ripple on tap */
-.bn-ripple{
-  position:absolute;inset:0;border-radius:inherit;
-  background:radial-gradient(circle at center,rgba(232,25,44,.18) 0%,transparent 70%);
-  opacity:0;transform:scale(0.5);
-  transition:opacity .4s ease, transform .4s ease;
-  pointer-events:none;
-}
-.bn.tapped .bn-ripple{opacity:1;transform:scale(1.6)}
+.bn-ripple{display:none}
 
 /* ==================================
    HOME TAB
@@ -636,13 +661,6 @@ button{cursor:pointer;border:none;background:none}
   <div class="edit-widgets"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Edit Widgets</div>
   <div style="height:1rem"></div>
   <!-- bottom nav -->
-  <nav class="bot-nav" data-active="0">
-    <div class="bn active" onclick="goTab('home')"><div class="bn-ripple"></div><div class="bn-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></div><span class="bn-lbl">Home</span></div>
-    <div class="bn" onclick="goTab('card')"><div class="bn-ripple"></div><div class="bn-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg></div><span class="bn-lbl">Card</span></div>
-    <div class="bn" onclick="goTab('send')"><div class="bn-ripple"></div><div class="bn-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg></div><span class="bn-lbl">Send</span></div>
-    <div class="bn" onclick="goTab('assets')"><div class="bn-ripple"></div><div class="bn-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg></div><span class="bn-lbl">Assets</span></div>
-    <div class="bn" onclick="goTab('profile')"><div class="bn-ripple"></div><div class="bn-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div><span class="bn-lbl">Profile</span></div>
-  </nav>
 </div>
 
 <!-- ================================
@@ -725,13 +743,6 @@ button{cursor:pointer;border:none;background:none}
       <div class="spend-track"><div class="spend-fill" id="spendFill" style="width:0%"></div></div>
     </div>
   </div>
-  <nav class="bot-nav" data-active="1">
-    <div class="bn" onclick="goTab('home')"><div class="bn-ripple"></div><div class="bn-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></div><span class="bn-lbl">Home</span></div>
-    <div class="bn active"><div class="bn-ripple"></div><div class="bn-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg></div><span class="bn-lbl">Card</span></div>
-    <div class="bn" onclick="goTab('send')"><div class="bn-ripple"></div><div class="bn-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg></div><span class="bn-lbl">Send</span></div>
-    <div class="bn" onclick="goTab('assets')"><div class="bn-ripple"></div><div class="bn-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg></div><span class="bn-lbl">Assets</span></div>
-    <div class="bn" onclick="goTab('profile')"><div class="bn-ripple"></div><div class="bn-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div><span class="bn-lbl">Profile</span></div>
-  </nav>
 </div>
 
 <!-- ================================
@@ -909,13 +920,6 @@ button{cursor:pointer;border:none;background:none}
     </div>
 
   </div>
-  <nav class="bot-nav" data-active="2">
-    <div class="bn" onclick="goTab('home')"><div class="bn-ripple"></div><div class="bn-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></div><span class="bn-lbl">Home</span></div>
-    <div class="bn" onclick="goTab('card')"><div class="bn-ripple"></div><div class="bn-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg></div><span class="bn-lbl">Card</span></div>
-    <div class="bn active"><div class="bn-ripple"></div><div class="bn-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg></div><span class="bn-lbl">Send</span></div>
-    <div class="bn" onclick="goTab('assets')"><div class="bn-ripple"></div><div class="bn-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg></div><span class="bn-lbl">Assets</span></div>
-    <div class="bn" onclick="goTab('profile')"><div class="bn-ripple"></div><div class="bn-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div><span class="bn-lbl">Profile</span></div>
-  </nav>
 </div>
 
 <!-- ================================
@@ -947,13 +951,6 @@ button{cursor:pointer;border:none;background:none}
     </div>
   </div>
   <div id="assetList" style="padding:0 0 1rem"></div>
-  <nav class="bot-nav" data-active="3">
-    <div class="bn" onclick="goTab('home')"><div class="bn-ripple"></div><div class="bn-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></div><span class="bn-lbl">Home</span></div>
-    <div class="bn" onclick="goTab('card')"><div class="bn-ripple"></div><div class="bn-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg></div><span class="bn-lbl">Card</span></div>
-    <div class="bn" onclick="goTab('send')"><div class="bn-ripple"></div><div class="bn-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg></div><span class="bn-lbl">Send</span></div>
-    <div class="bn active"><div class="bn-ripple"></div><div class="bn-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg></div><span class="bn-lbl">Assets</span></div>
-    <div class="bn" onclick="goTab('profile')"><div class="bn-ripple"></div><div class="bn-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div><span class="bn-lbl">Profile</span></div>
-  </nav>
 </div>
 
 <!-- ================================
@@ -1117,13 +1114,6 @@ button{cursor:pointer;border:none;background:none}
     </button>
     <div style="height:.5rem"></div>
   </div>
-  <nav class="bot-nav" data-active="4">
-    <div class="bn" onclick="goTab('home')"><div class="bn-ripple"></div><div class="bn-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></div><span class="bn-lbl">Home</span></div>
-    <div class="bn" onclick="goTab('card')"><div class="bn-ripple"></div><div class="bn-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg></div><span class="bn-lbl">Card</span></div>
-    <div class="bn" onclick="goTab('send')"><div class="bn-ripple"></div><div class="bn-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg></div><span class="bn-lbl">Send</span></div>
-    <div class="bn" onclick="goTab('assets')"><div class="bn-ripple"></div><div class="bn-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg></div><span class="bn-lbl">Assets</span></div>
-    <div class="bn active"><div class="bn-ripple"></div><div class="bn-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div><span class="bn-lbl">Profile</span></div>
-  </nav>
 </div>
 
 <!-- ================================
@@ -1576,41 +1566,73 @@ button{cursor:pointer;border:none;background:none}
     </div>
 
     <!-- Seller listings -->
-    <div id="p2pListings" style="display:flex;flex-direction:column;gap:.7rem;padding:0 1rem"></div>
+    <div id="p2pListings" style="display:flex;flex-direction:column;gap:.7rem;padding:0 1rem;padding-bottom:90px"></div>
   </div>
 
-  <!-- P2P bottom nav -->
-  <nav style="position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:calc(100% - 24px);max-width:456px;background:rgba(18,18,18,0.92);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);border:1px solid rgba(255,255,255,0.08);border-radius:24px 24px 0 0;display:flex;padding:.55rem 0 1.1rem;z-index:100;box-shadow:0 -8px 32px rgba(0,0,0,.45)">
-    <div onclick="toast('P2P section')" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:.22rem;cursor:pointer">
-      <div style="width:36px;height:36px;border-radius:14px;background:var(--red);box-shadow:0 4px 16px rgba(232,25,44,.45);display:grid;place-items:center;transform:translateY(-4px)">
-        <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" style="width:18px;height:18px"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>
+  <!-- P2P ORDERS SUB-SCREEN (slides in over marketplace) -->
+  <div id="p2pOrders" style="display:none;position:absolute;inset:0;background:var(--bg);z-index:10;overflow-y:auto;padding-bottom:90px">
+    <div class="app-bar">
+      <button onclick="closeP2POrders()" style="width:36px;height:36px;border-radius:50%;display:grid;place-items:center;background:none">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" style="width:20px;height:20px"><polyline points="15 18 9 12 15 6"/></svg>
+      </button>
+      <span style="font-size:1rem;font-weight:700">My Orders</span>
+      <div style="width:36px"></div>
+    </div>
+
+    <!-- Order type tabs -->
+    <div style="display:flex;border-bottom:1px solid var(--border2);margin-bottom:1rem">
+      <button id="ordTabPending" onclick="setOrderTab('pending')" style="flex:1;padding:.75rem;font-size:.85rem;font-weight:700;border:none;background:none;color:var(--txt);border-bottom:2px solid var(--red)">Processing</button>
+      <button id="ordTabCompleted" onclick="setOrderTab('completed')" style="flex:1;padding:.75rem;font-size:.85rem;font-weight:600;border:none;background:none;color:var(--txt3);border-bottom:2px solid transparent">Completed</button>
+    </div>
+
+    <div id="p2pOrdersList" style="padding:0 1rem"></div>
+  </div>
+
+  <!-- P2P capsule bottom nav (matches global style, shown only when P2P screen active) -->
+  <nav id="p2pNav" style="position:fixed;bottom:10px;left:50%;transform:translateX(-50%);width:calc(100% - 32px);max-width:440px;background:rgba(22,22,22,0.82);backdrop-filter:blur(32px) saturate(200%);-webkit-backdrop-filter:blur(32px) saturate(200%);border:1px solid rgba(255,255,255,0.10);border-radius:999px;display:flex;padding:.52rem .4rem;z-index:200;box-shadow:0 8px 32px rgba(0,0,0,.55),0 1px 0 rgba(255,255,255,.07) inset,0 -1px 0 rgba(0,0,0,.4) inset;user-select:none;-webkit-user-select:none">
+
+    <!-- Bubble -->
+    <div id="p2pNavBubble" style="position:absolute;top:.38rem;height:calc(100% - .76rem);border-radius:999px;background:rgba(45,45,48,0.95);box-shadow:0 2px 12px rgba(0,0,0,.5),0 1px 0 rgba(255,255,255,.12) inset;pointer-events:none;will-change:transform,width;z-index:0;transition:left .32s cubic-bezier(.34,1.56,.64,1),width .32s cubic-bezier(.34,1.56,.64,1)"></div>
+
+    <!-- P2P tab (active) -->
+    <div id="p2pnt0" onclick="switchP2PTab(0)" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:.18rem;cursor:pointer;padding:.28rem .2rem;position:relative;z-index:1;-webkit-tap-highlight-color:transparent">
+      <div style="width:34px;height:34px;display:grid;place-items:center">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" style="width:18px;height:18px;color:#fff"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>
       </div>
       <span style="font-size:.58rem;font-weight:700;color:var(--red)">P2P</span>
     </div>
-    <div onclick="toast('Orders coming soon')" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:.22rem;cursor:pointer;padding:.2rem 0">
-      <div style="width:36px;height:36px;border-radius:14px;display:grid;place-items:center">
-        <svg viewBox="0 0 24 24" fill="none" stroke="var(--txt3)" stroke-width="2.2" style="width:18px;height:18px"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+
+    <!-- Orders tab -->
+    <div id="p2pnt1" onclick="switchP2PTab(1)" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:.18rem;cursor:pointer;padding:.28rem .2rem;position:relative;z-index:1;-webkit-tap-highlight-color:transparent">
+      <div style="width:34px;height:34px;display:grid;place-items:center">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" style="width:18px;height:18px;color:rgba(255,255,255,0.38)"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
       </div>
-      <span style="font-size:.58rem;font-weight:700;color:var(--txt3)">Orders</span>
+      <span style="font-size:.58rem;font-weight:700;color:rgba(255,255,255,0.35)">Orders</span>
     </div>
-    <div onclick="toast('Chat coming soon')" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:.22rem;cursor:pointer;padding:.2rem 0;position:relative">
-      <div style="width:36px;height:36px;border-radius:14px;display:grid;place-items:center">
-        <svg viewBox="0 0 24 24" fill="none" stroke="var(--txt3)" stroke-width="2.2" style="width:18px;height:18px"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
+
+    <!-- Chat tab -->
+    <div id="p2pnt2" onclick="switchP2PTab(2)" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:.18rem;cursor:pointer;padding:.28rem .2rem;position:relative;z-index:1;-webkit-tap-highlight-color:transparent">
+      <div style="width:34px;height:34px;display:grid;place-items:center;position:relative">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" style="width:18px;height:18px;color:rgba(255,255,255,0.38)"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
+        <div style="position:absolute;top:-2px;right:2px;width:14px;height:14px;border-radius:50%;background:var(--red);border:2px solid var(--bg);font-size:.5rem;font-weight:800;color:#fff;display:grid;place-items:center">2</div>
       </div>
-      <span style="font-size:.58rem;font-weight:700;color:var(--txt3)">Chat</span>
-      <div style="position:absolute;top:4px;right:calc(50% - 22px);width:16px;height:16px;border-radius:50%;background:var(--red);border:2px solid var(--bg);font-size:.55rem;font-weight:800;color:#fff;display:grid;place-items:center">2</div>
+      <span style="font-size:.58rem;font-weight:700;color:rgba(255,255,255,0.35)">Chat</span>
     </div>
-    <div onclick="toast('Ads coming soon')" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:.22rem;cursor:pointer;padding:.2rem 0">
-      <div style="width:36px;height:36px;border-radius:14px;display:grid;place-items:center">
-        <svg viewBox="0 0 24 24" fill="none" stroke="var(--txt3)" stroke-width="2.2" style="width:18px;height:18px"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+
+    <!-- Ads tab -->
+    <div id="p2pnt3" onclick="switchP2PTab(3)" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:.18rem;cursor:pointer;padding:.28rem .2rem;position:relative;z-index:1;-webkit-tap-highlight-color:transparent">
+      <div style="width:34px;height:34px;display:grid;place-items:center">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" style="width:18px;height:18px;color:rgba(255,255,255,0.38)"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18"/><path d="M9 21V9"/></svg>
       </div>
-      <span style="font-size:.58rem;font-weight:700;color:var(--txt3)">Ads</span>
+      <span style="font-size:.58rem;font-weight:700;color:rgba(255,255,255,0.35)">Ads</span>
     </div>
-    <div onclick="openP2PProfile()" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:.22rem;cursor:pointer;padding:.2rem 0">
-      <div style="width:36px;height:36px;border-radius:14px;display:grid;place-items:center">
-        <svg viewBox="0 0 24 24" fill="none" stroke="var(--txt3)" stroke-width="2.2" style="width:18px;height:18px"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+
+    <!-- Profile tab -->
+    <div id="p2pnt4" onclick="switchP2PTab(4)" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:.18rem;cursor:pointer;padding:.28rem .2rem;position:relative;z-index:1;-webkit-tap-highlight-color:transparent">
+      <div style="width:34px;height:34px;display:grid;place-items:center">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" style="width:18px;height:18px;color:rgba(255,255,255,0.38)"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
       </div>
-      <span style="font-size:.58rem;font-weight:700;color:var(--txt3)">Profile</span>
+      <span style="font-size:.58rem;font-weight:700;color:rgba(255,255,255,0.35)">Profile</span>
     </div>
   </nav>
 </div>
@@ -1828,6 +1850,13 @@ function showHome() {
     window._priceTicker = true;
     startPriceTicker();
   }
+  // Re-snap all bubbles after layout settles
+  setTimeout(function() {
+    var _navEls = [document.getElementById('globalNav')].filter(Boolean); _navEls.forEach(function(nav) {
+      var idx = parseInt(nav.getAttribute('data-active')) || 0;
+      snapBubble(nav, idx, false);
+    });
+  }, 60);
 }
 
 const TABS = {
@@ -1839,20 +1868,211 @@ const TABS = {
   coin:    {scr:'scrCoin',    active:'assets'},
 };
 function goTab(name) {
-  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-  document.getElementById(TABS[name].scr).classList.add('active');
+  var nextId = TABS[name].scr;
+  var nextScr = document.getElementById(nextId);
+  if (!nextScr) return;
+
+  var cur = document.querySelector('.screen.active');
+
+  if (cur && cur !== nextScr) {
+    cur.classList.add('leaving');
+    cur.classList.remove('active');
+    var leavingScr = cur;
+    setTimeout(function() { leavingScr.classList.remove('leaving'); }, 250);
+  } else if (cur === nextScr) {
+    return;
+  }
+
+  nextScr.scrollTop = 0;
+  nextScr.classList.add('active');
   renderAll();
-  document.getElementById(TABS[name].scr).scrollTop = 0;
-  // Update glass nav pill position on all navbars
+
   var tabIdx = {home:0, card:1, send:2, assets:3, profile:4, coin:3};
   var idx = tabIdx[name] !== undefined ? tabIdx[name] : 0;
-  document.querySelectorAll('.bot-nav').forEach(function(nav) {
+  var _navEls = [document.getElementById('globalNav')].filter(Boolean); _navEls.forEach(function(nav) {
     nav.setAttribute('data-active', idx);
     nav.querySelectorAll('.bn').forEach(function(bn, i) {
       if (i === idx) bn.classList.add('active'); else bn.classList.remove('active');
     });
+    snapBubble(nav, idx, true);
+  });
+  requestAnimationFrame(function() {
+    var _navEls = [document.getElementById('globalNav')].filter(Boolean); _navEls.forEach(function(nav) {
+      var i = parseInt(nav.getAttribute('data-active')) || 0;
+      snapBubble(nav, i, false);
+    });
   });
 }
+
+/* ======================================
+   CAPSULE NAV BUBBLE ENGINE
+====================================== */
+function getBubbleTarget(nav, idx) {
+  var tabs = nav.querySelectorAll('.bn');
+  if (!tabs[idx]) return null;
+  var navRect = nav.getBoundingClientRect();
+  var tabRect = tabs[idx].getBoundingClientRect();
+  return {
+    x: tabRect.left - navRect.left,
+    w: tabRect.width
+  };
+}
+
+function snapBubble(nav, idx, animate) {
+  var bubble = nav.querySelector('.nav-bubble');
+  if (!bubble) return;
+  var t = getBubbleTarget(nav, idx);
+  if (!t) return;
+  if (animate) {
+    bubble.style.transition = 'left .38s cubic-bezier(.34,1.56,.64,1), width .38s cubic-bezier(.34,1.56,.64,1)';
+  } else {
+    bubble.style.transition = 'none';
+  }
+  bubble.style.left = t.x + 'px';
+  bubble.style.width = t.w + 'px';
+}
+
+function initNavBubble(nav) {
+  var bubble = nav.querySelector('.nav-bubble');
+  if (!bubble) return;
+  var tabs = nav.querySelectorAll('.bn');
+  var numTabs = tabs.length;
+  var currentIdx = parseInt(nav.getAttribute('data-active')) || 0;
+  var dragStartX = 0;
+  var dragCurrentX = 0;
+  var isDragging = false;
+  var dragStartIdx = 0;
+
+  // Initial position — no animation on first paint
+  requestAnimationFrame(function() {
+    snapBubble(nav, currentIdx, false);
+  });
+
+  nav.addEventListener('touchstart', function(e) {
+    var touch = e.touches[0];
+    dragStartX = touch.clientX;
+    dragCurrentX = touch.clientX;
+    dragStartIdx = parseInt(nav.getAttribute('data-active')) || 0;
+    isDragging = false;
+    // Remove transition for live tracking
+    bubble.style.transition = 'none';
+  }, {passive:true});
+
+  nav.addEventListener('touchmove', function(e) {
+    if (e.touches.length !== 1) return;
+    var touch = e.touches[0];
+    var dx = touch.clientX - dragStartX;
+    if (Math.abs(dx) > 4) isDragging = true;
+    if (!isDragging) return;
+
+    dragCurrentX = touch.clientX;
+    var navRect = nav.getBoundingClientRect();
+    var startTarget = getBubbleTarget(nav, dragStartIdx);
+    if (!startTarget) return;
+
+    // Calculate how far we've dragged relative to one tab width
+    var tabW = navRect.width / numTabs;
+    var rawShift = dx / tabW; // fractional tab shift
+    var clampedShift = Math.max(-dragStartIdx, Math.min(numTabs - 1 - dragStartIdx, rawShift));
+
+    // Interpolate bubble position between tabs
+    var targetIdx = dragStartIdx + clampedShift;
+    var fromTarget = getBubbleTarget(nav, dragStartIdx);
+
+    // Find neighbouring tab targets
+    var floorIdx = Math.max(0, Math.min(numTabs - 1, Math.floor(targetIdx)));
+    var ceilIdx  = Math.max(0, Math.min(numTabs - 1, Math.ceil(targetIdx)));
+    var frac = targetIdx - floorIdx;
+
+    var fromT = getBubbleTarget(nav, floorIdx);
+    var toT   = getBubbleTarget(nav, ceilIdx);
+    if (!fromT || !toT) return;
+
+    var interpX = fromT.x + (toT.x - fromT.x) * frac;
+    var interpW = fromT.w + (toT.w - fromT.w) * frac;
+
+    // Rubber-band at edges
+    if (clampedShift !== rawShift) {
+      var overshoot = rawShift - clampedShift;
+      interpX += overshoot * tabW * 0.22;
+    }
+
+    bubble.style.left  = interpX + 'px';
+    bubble.style.width = interpW + 'px';
+
+    // Live-highlight the nearest tab
+    var nearestIdx = Math.round(targetIdx);
+    nearestIdx = Math.max(0, Math.min(numTabs - 1, nearestIdx));
+    tabs.forEach(function(bn, i) {
+      if (i === nearestIdx) bn.classList.add('active'); else bn.classList.remove('active');
+    });
+  }, {passive:true});
+
+  nav.addEventListener('touchend', function(e) {
+    if (!isDragging) return;
+    isDragging = false;
+    var dx = dragCurrentX - dragStartX;
+    var navRect = nav.getBoundingClientRect();
+    var tabW = navRect.width / numTabs;
+    var shift = Math.round(dx / tabW);
+    var newIdx = Math.max(0, Math.min(numTabs - 1, dragStartIdx + shift));
+
+    // Snap with spring animation
+    bubble.style.transition = 'left .32s cubic-bezier(.34,1.56,.64,1), width .32s cubic-bezier(.34,1.56,.64,1)';
+    snapBubble(nav, newIdx, false);
+    nav.setAttribute('data-active', newIdx);
+    tabs.forEach(function(bn, i) {
+      if (i === newIdx) bn.classList.add('active'); else bn.classList.remove('active');
+    });
+
+    // Navigate to the tab
+    var tabNames = ['home','card','send','assets','profile'];
+    // figure out which tabs this nav has
+    var bnList = Array.from(tabs);
+    var clickFn = bnList[newIdx] && bnList[newIdx].getAttribute('onclick');
+    if (clickFn) {
+      var m = clickFn.match(/goTab\('(\w+)'\)/);
+      if (m) {
+        var targetName = m[1];
+        // update all other navs too
+        var allTabIdx = {home:0, card:1, send:2, assets:3, profile:4, coin:3};
+        var globalIdx = allTabIdx[targetName] || 0;
+        // nav IS the global nav now — just update it directly
+        nav.setAttribute('data-active', globalIdx);
+        nav.querySelectorAll('.bn').forEach(function(b, i) {
+          if (i === globalIdx) b.classList.add('active'); else b.classList.remove('active');
+        });
+        snapBubble(nav, globalIdx, true);
+        // Switch screen with cross-fade transition
+        var curScr = document.querySelector('.screen.active');
+        var nextScr2 = document.getElementById(TABS[targetName].scr);
+        if (curScr && nextScr2 && curScr !== nextScr2) {
+          curScr.classList.add('leaving');
+          curScr.classList.remove('active');
+          setTimeout(function(){ curScr.classList.remove('leaving'); }, 250);
+          nextScr2.scrollTop = 0;
+          nextScr2.classList.add('active');
+        }
+        renderAll();
+      }
+    }
+  }, {passive:true});
+}
+
+// Boot all navs after DOM ready
+function initAllNavBubbles() {
+  var _navEls = [document.getElementById('globalNav')].filter(Boolean); _navEls.forEach(function(nav) {
+    initNavBubble(nav);
+  });
+  // Re-snap on resize/orientation change
+  window.addEventListener('resize', function() {
+    var _navEls = [document.getElementById('globalNav')].filter(Boolean); _navEls.forEach(function(nav) {
+      var idx = parseInt(nav.getAttribute('data-active')) || 0;
+      snapBubble(nav, idx, false);
+    });
+  });
+}
+
 
 /* ======================================
    RENDER ALL
@@ -3635,6 +3855,7 @@ function buildStatementHTML(txs, s) {
     + '</div>'
     + '<div class="footer"><div class="footer-txt">© 2024 Wave LTD Financial Inc. · All rights reserved</div><div class="footer-txt">' + genId + '</div></div>'
     + '</div>'
+    + '</div>'
     + '</body></html>'
   };
 }
@@ -3707,14 +3928,7 @@ goTab = function(name) {
   _origGoTab(name);
   if (name === 'profile') { renderProfileStats(); }
 };
-document.addEventListener('click', function(e) {
-  var bn = e.target.closest('.bn');
-  if (!bn) return;
-  bn.classList.remove('tapped');
-  void bn.offsetWidth;
-  bn.classList.add('tapped');
-  setTimeout(function(){ bn.classList.remove('tapped'); }, 500);
-});
+/* ripple removed — bubble handles active state */
 
 
 function renderAssets(s) {
@@ -3797,7 +4011,12 @@ function openCoinDetail(sym) {
       histEl.innerHTML = '<div style="text-align:center;padding:3rem 0;color:var(--txt3);font-size:.88rem">No history found</div>';
     }
   }
-  document.querySelectorAll('.screen').forEach(function(sc){ sc.classList.remove('active'); });
+  var cur = document.querySelector('.screen.active');
+  if (cur) {
+    cur.classList.add('leaving');
+    cur.classList.remove('active');
+    setTimeout(function(){ cur.classList.remove('leaving'); }, 250);
+  }
   var cs = document.getElementById('scrCoin');
   if (cs) cs.classList.add('active');
 }
@@ -3871,6 +4090,7 @@ function verifyCardPin() {
 document.addEventListener('DOMContentLoaded', function() {
   var pi = document.getElementById('cardPinInput');
   if (pi) pi.addEventListener('keydown', function(e) { if (e.key === 'Enter') verifyCardPin(); });
+  initAllNavBubbles();
 });
 
 /* ======================================
@@ -3922,15 +4142,166 @@ var P2P_METHOD_COLORS = {
 function openP2P() {
   var scr = document.getElementById('scrP2P');
   if (!scr) return;
+  var cur = document.querySelector('.screen.active');
+  if (cur && cur !== scr) {
+    cur.classList.add('leaving');
+    cur.classList.remove('active');
+    setTimeout(function(){ cur.classList.remove('leaving'); }, 250);
+  }
   scr.classList.add('active');
   renderP2PListings();
   updateP2PProfileBalance();
+  // Hide global nav, show P2P nav
+  var gNav = document.getElementById('globalNav');
+  if (gNav) gNav.style.display = 'none';
+  // Position P2P nav bubble on tab 0
+  setTimeout(function(){ snapP2PBubble(0, false); }, 50);
 }
 
 function closeP2P() {
   var scr = document.getElementById('scrP2P');
-  if (scr) scr.classList.remove('active');
+  if (!scr) return;
+  scr.classList.add('leaving');
+  scr.classList.remove('active');
+  setTimeout(function(){ scr.classList.remove('leaving'); }, 250);
+  var home = document.getElementById('scrHome');
+  if (home) home.classList.add('active');
+  // Restore global nav
+  var gNav = document.getElementById('globalNav');
+  if (gNav) { gNav.style.display = ''; snapBubble(gNav, 0, false); }
+  // Close orders sub-screen if open
+  var ord = document.getElementById('p2pOrders');
+  if (ord) ord.style.display = 'none';
 }
+
+/* ======================================
+   P2P NAV TABS + ORDERS
+====================================== */
+var p2pActiveNav = 0;
+
+function snapP2PBubble(idx, animate) {
+  var nav = document.getElementById('p2pNav');
+  var bubble = document.getElementById('p2pNavBubble');
+  if (!nav || !bubble) return;
+  var tabs = nav.querySelectorAll('[id^="p2pnt"]');
+  if (!tabs[idx]) return;
+  var navRect = nav.getBoundingClientRect();
+  var tabRect = tabs[idx].getBoundingClientRect();
+  bubble.style.transition = animate
+    ? 'left .32s cubic-bezier(.34,1.56,.64,1), width .32s cubic-bezier(.34,1.56,.64,1)'
+    : 'none';
+  bubble.style.left  = (tabRect.left - navRect.left) + 'px';
+  bubble.style.width = tabRect.width + 'px';
+}
+
+function switchP2PTab(idx) {
+  p2pActiveNav = idx;
+  snapP2PBubble(idx, true);
+
+  // Update label colours
+  var labels = ['P2P','Orders','Chat','Ads','Profile'];
+  for (var i = 0; i < 5; i++) {
+    var t = document.getElementById('p2pnt' + i);
+    if (!t) continue;
+    var svg = t.querySelector('svg');
+    var lbl = t.querySelector('span');
+    if (i === idx) {
+      if (svg) svg.style.color = '#fff';
+      if (lbl) lbl.style.color = 'var(--red)';
+    } else {
+      if (svg) svg.style.color = 'rgba(255,255,255,0.38)';
+      if (lbl) lbl.style.color = 'rgba(255,255,255,0.35)';
+    }
+  }
+
+  // Handle routing
+  var ord = document.getElementById('p2pOrders');
+  if (idx === 0) {
+    // Marketplace — close orders
+    if (ord) ord.style.display = 'none';
+  } else if (idx === 1) {
+    // Orders
+    if (ord) { ord.style.display = 'block'; renderP2POrders('pending'); }
+  } else if (idx === 4) {
+    // Profile
+    if (ord) ord.style.display = 'none';
+    openP2PProfile();
+  } else {
+    if (ord) ord.style.display = 'none';
+    var names = {2:'Chat', 3:'Ads'};
+    toast(names[idx] + ' coming soon');
+  }
+}
+
+function closeP2POrders() {
+  switchP2PTab(0);
+}
+
+var p2pOrderTab = 'pending';
+function setOrderTab(tab) {
+  p2pOrderTab = tab;
+  var pBtn = document.getElementById('ordTabPending');
+  var cBtn = document.getElementById('ordTabCompleted');
+  if (tab === 'pending') {
+    pBtn.style.color = 'var(--txt)'; pBtn.style.borderBottomColor = 'var(--red)'; pBtn.style.fontWeight = '700';
+    cBtn.style.color = 'var(--txt3)'; cBtn.style.borderBottomColor = 'transparent'; cBtn.style.fontWeight = '600';
+  } else {
+    cBtn.style.color = 'var(--txt)'; cBtn.style.borderBottomColor = 'var(--red)'; cBtn.style.fontWeight = '700';
+    pBtn.style.color = 'var(--txt3)'; pBtn.style.borderBottomColor = 'transparent'; pBtn.style.fontWeight = '600';
+  }
+  renderP2POrders(tab);
+}
+
+var P2P_ORDERS = [
+  { id:'ORD-0012', type:'Buy', coin:'USDT', amount:1.96, fiat:250, currency:'BDT', seller:'__Fast_VIP_Bazar__', status:'completed', date:'2026-06-14 23:46:57', method:'bKash' },
+  { id:'ORD-0011', type:'Buy', coin:'USDT', amount:3.88, fiat:500, currency:'BDT', seller:'BD_ExchangePro', status:'completed', date:'2026-06-12 11:22:04', method:'Nagad' },
+  { id:'ORD-0010', type:'Sell', coin:'USDT', amount:5.00, fiat:637, currency:'BDT', seller:'CryptoKing_BD', status:'completed', date:'2026-06-08 18:05:31', method:'bKash' },
+  { id:'ORD-0009', type:'Buy', coin:'USDT', amount:2.50, fiat:320, currency:'BDT', seller:'SafeTrader247', status:'completed', date:'2026-06-01 09:14:55', method:'Rocket' },
+];
+
+function renderP2POrders(tab) {
+  var list = document.getElementById('p2pOrdersList');
+  if (!list) return;
+  var orders = tab === 'pending' ? [] : P2P_ORDERS;
+
+  if (orders.length === 0) {
+    list.innerHTML = '<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;padding:4rem 1rem;gap:1rem">'
+      + '<svg viewBox="0 0 24 24" fill="none" stroke="var(--txt3)" stroke-width="1.5" style="width:52px;height:52px;opacity:.4"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>'
+      + '<div style="font-size:.95rem;font-weight:600;color:var(--txt3)">' + (tab === 'pending' ? 'No active orders' : 'No completed orders') + '</div>'
+      + '<div style="font-size:.8rem;color:var(--txt3);opacity:.6;text-align:center">Your P2P orders will appear here</div>'
+      + '</div>';
+    return;
+  }
+
+  list.innerHTML = orders.map(function(o) {
+    var isB = o.type === 'Buy';
+    var statusColor = o.status === 'completed' ? 'var(--green)' : o.status === 'pending' ? 'var(--amber)' : 'var(--red)';
+    var statusLabel = o.status.charAt(0).toUpperCase() + o.status.slice(1);
+    return '<div style="background:var(--card);border:1px solid var(--border2);border-radius:var(--r);padding:1rem;margin-bottom:.7rem">'
+      + '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:.6rem">'
+        + '<div>'
+          + '<div style="display:flex;align-items:center;gap:.5rem;margin-bottom:.2rem">'
+            + '<span style="font-size:.68rem;font-weight:800;padding:.15rem .5rem;border-radius:6px;background:' + (isB ? 'rgba(34,197,94,.15)' : 'rgba(232,25,44,.15)') + ';color:' + (isB ? 'var(--green)' : 'var(--red)') + '">' + o.type + '</span>'
+            + '<span style="font-size:.78rem;font-weight:700">' + o.coin + '</span>'
+          + '</div>'
+          + '<div style="font-size:.7rem;color:var(--txt3)">' + o.date + '</div>'
+        + '</div>'
+        + '<div style="text-align:right">'
+          + '<div style="font-size:.95rem;font-weight:800">' + o.amount.toFixed(2) + ' ' + o.coin + '</div>'
+          + '<div style="font-size:.72rem;color:var(--txt2)">' + o.fiat.toLocaleString() + ' ' + o.currency + '</div>'
+        + '</div>'
+      + '</div>'
+      + '<div style="display:flex;justify-content:space-between;align-items:center;padding-top:.6rem;border-top:1px solid var(--border2)">'
+        + '<div style="font-size:.72rem;color:var(--txt2)"><span style="color:var(--txt3)">Seller:</span> ' + o.seller + '</div>'
+        + '<div style="display:flex;align-items:center;gap:.5rem">'
+          + '<span style="font-size:.68rem;color:var(--txt3)">' + o.method + '</span>'
+          + '<span style="font-size:.7rem;font-weight:700;color:' + statusColor + '">' + statusLabel + '</span>'
+        + '</div>'
+      + '</div>'
+    + '</div>';
+  }).join('');
+}
+
 
 function setP2PTab(tab) {
   p2pTab = tab;
@@ -4050,13 +4421,6 @@ function updateP2PProfileBalance() {
       <div id="coinHistory"></div>
     </div>
   </div>
-  <nav class="bot-nav" data-active="3">
-    <div class="bn" onclick="goTab('home')"><div class="bn-ripple"></div><div class="bn-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></div><span class="bn-lbl">Home</span></div>
-    <div class="bn" onclick="goTab('card')"><div class="bn-ripple"></div><div class="bn-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg></div><span class="bn-lbl">Card</span></div>
-    <div class="bn" onclick="goTab('send')"><div class="bn-ripple"></div><div class="bn-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg></div><span class="bn-lbl">Send</span></div>
-    <div class="bn active"><div class="bn-ripple"></div><div class="bn-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg></div><span class="bn-lbl">Assets</span></div>
-    <div class="bn" onclick="goTab('profile')"><div class="bn-ripple"></div><div class="bn-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div><span class="bn-lbl">Profile</span></div>
-  </nav>
 </div>
 
 <!-- ============================================================
@@ -4284,5 +4648,13 @@ function updateP2PProfileBalance() {
   ></iframe>
 </div>
 
+<nav class="bot-nav" id="globalNav" data-active="0">
+    <div class="nav-bubble" id="nb0"></div>
+    <div class="bn active" onclick="goTab('home')"><div class="bn-ripple"></div><div class="bn-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></div><span class="bn-lbl">Home</span></div>
+    <div class="bn" onclick="goTab('card')"><div class="bn-ripple"></div><div class="bn-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg></div><span class="bn-lbl">Card</span></div>
+    <div class="bn" onclick="goTab('send')"><div class="bn-ripple"></div><div class="bn-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg></div><span class="bn-lbl">Send</span></div>
+    <div class="bn" onclick="goTab('assets')"><div class="bn-ripple"></div><div class="bn-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg></div><span class="bn-lbl">Assets</span></div>
+    <div class="bn" onclick="goTab('profile')"><div class="bn-ripple"></div><div class="bn-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div><span class="bn-lbl">Profile</span></div>
+  </nav>
 </body>
 </html>
